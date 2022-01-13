@@ -1,0 +1,2 @@
+bitcoind:
+  rpc_user: "user"
