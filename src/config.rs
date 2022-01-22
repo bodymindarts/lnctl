@@ -20,7 +20,6 @@ impl Config {
 #[derive(Debug, Deserialize)]
 pub struct BitcoindConfig {
     pub rpc_user: String,
-    pub rpc_password: Option<String>,
     pub rpc_password_file: Option<PathBuf>,
     pub rpc_host: String,
     pub rpc_port: u16,
