@@ -1,23 +1,32 @@
 use super::convert::{BlockchainInfo, FeeResponse, FundedTx, NewAddress, RawTx, SignedTx};
+use anyhow::Context;
 use base64;
 use bitcoin::blockdata::block::Block;
 use bitcoin::blockdata::transaction::Transaction;
 use bitcoin::consensus::encode;
 use bitcoin::hash_types::{BlockHash, Txid};
 use bitcoin::util::address::Address;
-use lightning::chain::chaininterface::{BroadcasterInterface, ConfirmationTarget, FeeEstimator};
+use lightning::chain::{
+    chaininterface::{BroadcasterInterface, ConfirmationTarget, FeeEstimator},
+    BestBlock,
+};
 use lightning_block_sync::http::HttpEndpoint;
 use lightning_block_sync::rpc::RpcClient;
 use lightning_block_sync::{AsyncBlockSourceResult, BlockHeaderData, BlockSource};
 use serde_json;
-use std::collections::HashMap;
-use std::str::FromStr;
-use std::sync::atomic::{AtomicU32, Ordering};
-use std::sync::Arc;
-use std::time::Duration;
+use std::{
+    collections::HashMap,
+    str::FromStr,
+    sync::{
+        atomic::{AtomicU32, Ordering},
+        Arc,
+    },
+    time::Duration,
+};
 use tokio::sync::Mutex;
 
 pub struct BitcoindClient {
+    pub network: bitcoin::Network,
     bitcoind_rpc_client: Arc<Mutex<RpcClient>>,
     host: String,
     port: u16,
@@ -69,6 +78,7 @@ const MIN_FEERATE: u32 = 253;
 
 impl BitcoindClient {
     pub async fn new(
+        network: bitcoin::Network,
         host: String,
         port: u16,
         rpc_user: String,
@@ -91,6 +101,7 @@ impl BitcoindClient {
         fees.insert(Target::Normal, AtomicU32::new(2000));
         fees.insert(Target::HighPriority, AtomicU32::new(5000));
         let client = Self {
+            network,
             bitcoind_rpc_client: Arc::new(Mutex::new(bitcoind_rpc_client)),
             host,
             port,
@@ -252,11 +263,19 @@ impl BitcoindClient {
         Address::from_str(addr.0.as_str()).unwrap()
     }
 
-    pub async fn get_blockchain_info(&self) -> BlockchainInfo {
+    pub async fn get_blockchain_info(&self) -> Result<BlockchainInfo, anyhow::Error> {
         let mut rpc = self.bitcoind_rpc_client.lock().await;
         rpc.call_method::<BlockchainInfo>("getblockchaininfo", &vec![])
             .await
-            .unwrap()
+            .context("Couldn't get blockchain info")
+    }
+
+    pub async fn get_best_block(&self) -> Result<BestBlock, anyhow::Error> {
+        let getinfo_resp = self.get_blockchain_info().await?;
+        Ok(BestBlock::new(
+            getinfo_resp.latest_blockhash,
+            getinfo_resp.latest_height as u32,
+        ))
     }
 }
 

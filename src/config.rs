@@ -6,6 +6,8 @@ use std::path::PathBuf;
 pub struct Config {
     #[serde(rename = "bitcoind")]
     pub bitcoind_config: BitcoindConfig,
+    pub data_dir: PathBuf,
+    pub listen_port: u16,
 }
 
 impl Config {
@@ -20,7 +22,8 @@ impl Config {
 #[derive(Debug, Deserialize)]
 pub struct BitcoindConfig {
     pub rpc_user: String,
-    pub rpc_password_file: Option<PathBuf>,
+    pub rpc_password_file: PathBuf,
     pub rpc_host: String,
     pub rpc_port: u16,
+    pub network: bitcoin::Network,
 }
