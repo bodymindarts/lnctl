@@ -7,7 +7,7 @@ use lightning::{
         keysinterface::KeysManager,
     },
     ln::{PaymentHash, PaymentPreimage, PaymentSecret},
-    util::events::{Event, PaymentPurpose},
+    util::events::{Event, EventHandler, PaymentPurpose},
 };
 use rand::{thread_rng, Rng};
 use std::{
@@ -47,7 +47,7 @@ pub fn init_ldk_events_handler(
     bitcoind_client: Arc<BitcoindClient>,
     keys_manager: Arc<KeysManager>,
     channel_manager: Arc<ChannelManager>,
-) {
+) -> impl EventHandler {
     // // TODO: persist payment info to disk
     let inbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
     let outbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
@@ -55,7 +55,7 @@ pub fn init_ldk_events_handler(
     let outbound_pmts_for_events = outbound_payments.clone();
     let bitcoind_rpc = bitcoind_client.clone();
     let handle = tokio::runtime::Handle::current();
-    let event_handler = move |event: &Event| {
+    return move |event: &Event| {
         handle.block_on(handle_ldk_events(
             channel_manager.clone(),
             bitcoind_client.clone(),

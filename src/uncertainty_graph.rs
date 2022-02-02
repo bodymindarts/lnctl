@@ -17,7 +17,7 @@ pub fn init_uncertainty_graph(
     network: bitcoin::Network,
     data_dir: &PathBuf,
     logger: Arc<LnCtlLogger>,
-) -> Result<ArcNetGraphMsgHandler, anyhow::Error> {
+) -> anyhow::Result<(ArcNetGraphMsgHandler, Arc<NetworkGraph>)> {
     let genesis = genesis_block(network).header.block_hash();
     let network_graph_path = format!("{}/network_graph", data_dir.as_path().display());
     let network_graph = Arc::new(persistence::read_network(
@@ -45,5 +45,5 @@ pub fn init_uncertainty_graph(
             }
         }
     });
-    Ok(network_gossip)
+    Ok((network_gossip, network_graph))
 }

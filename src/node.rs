@@ -1,6 +1,6 @@
 use crate::{
-    bitcoind, chain_monitor, channel_manager, config::Config, keys, ldk_events, ln_peers, logger,
-    persistence, scorer, uncertainty_graph,
+    bitcoind, chain_monitor, channel_manager, config::Config, invoice_payer, keys, ldk_events,
+    ln_peers, logger, persistence, scorer, uncertainty_graph,
 };
 use lightning_block_sync::{poll, SpvClient, UnboundedCache};
 use std::{ops::Deref, sync::Arc, time::Duration};
@@ -33,7 +33,7 @@ pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
     )
     .await?;
 
-    let network_gossip = uncertainty_graph::init_uncertainty_graph(
+    let (network_gossip, network_graph) = uncertainty_graph::init_uncertainty_graph(
         bitcoind_client.network,
         &config.data_dir,
         Arc::clone(&logger),
@@ -62,14 +62,23 @@ pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
         }
     });
 
-    let scorer = scorer::init_scorer(&config.data_dir);
-
     // Step 15: Handle LDK Events
-    ldk_events::init_ldk_events_handler(
+    let event_handler = ldk_events::init_ldk_events_handler(
         Arc::clone(&bitcoind_client),
         Arc::clone(&keys_manager),
         Arc::clone(&channel_manager),
     );
 
+    // Step 16: Initialize routing Scorer
+    let scorer = scorer::init_scorer(&config.data_dir);
+
+    // Step 17: Create InvoicePayer
+    invoice_payer::init_invoice_payer(
+        Arc::clone(&channel_manager),
+        Arc::clone(&network_graph),
+        Arc::clone(&scorer),
+        event_handler,
+        Arc::clone(&logger),
+    );
     Ok(())
 }

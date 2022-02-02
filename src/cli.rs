@@ -27,35 +27,6 @@ pub async fn run() -> anyhow::Result<()> {
 
     node::run_node(config).await?;
 
-    // // Step 16: Initialize routing Scorer
-    // let scorer_path = format!("{}/scorer", ldk_data_dir.clone());
-    // let scorer = Arc::new(Mutex::new(disk::read_scorer(Path::new(&scorer_path))));
-    // let scorer_persist = Arc::clone(&scorer);
-    // tokio::spawn(async move {
-    //     let mut interval = tokio::time::interval(Duration::from_secs(600));
-    //     loop {
-    //         interval.tick().await;
-    //         if disk::persist_scorer(Path::new(&scorer_path), &scorer_persist.lock().unwrap())
-    //             .is_err()
-    //         {
-    //             // Persistence errors here are non-fatal as channels will be re-scored as payments
-    //             // fail, but they may indicate a disk error which could be fatal elsewhere.
-    //             eprintln!("Warning: Failed to persist scorer, check your disk and permissions");
-    //         }
-    //     }
-    // });
-
-    // // Step 17: Create InvoicePayer
-    // let router = DefaultRouter::new(network_graph.clone(), logger.clone());
-    // let invoice_payer = Arc::new(InvoicePayer::new(
-    //     channel_manager.clone(),
-    //     router,
-    //     scorer.clone(),
-    //     logger.clone(),
-    //     event_handler,
-    //     payment::RetryAttempts(5),
-    // ));
-
     // // Step 18: Persist ChannelManager
     // let data_dir = ldk_data_dir.clone();
     // let persist_channel_manager_callback =
