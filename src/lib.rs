@@ -1,5 +1,6 @@
 pub mod cli;
 
+mod background;
 mod bitcoind;
 mod chain_monitor;
 mod channel_manager;

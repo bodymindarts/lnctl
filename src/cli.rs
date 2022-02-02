@@ -27,22 +27,6 @@ pub async fn run() -> anyhow::Result<()> {
 
     node::run_node(config).await?;
 
-    // // Step 18: Persist ChannelManager
-    // let data_dir = ldk_data_dir.clone();
-    // let persist_channel_manager_callback =
-    //     move |node: &ChannelManager| FilesystemPersister::persist_manager(data_dir.clone(), &*node);
-
-    // // Step 19: Background Processing
-    // let background_processor = BackgroundProcessor::start(
-    //     persist_channel_manager_callback,
-    //     invoice_payer.clone(),
-    //     chain_monitor.clone(),
-    //     channel_manager.clone(),
-    //     Some(network_gossip.clone()),
-    //     peer_manager.clone(),
-    //     logger.clone(),
-    // );
-
     // // Regularly reconnect to channel peers.
     // let connect_cm = Arc::clone(&channel_manager);
     // let connect_pm = Arc::clone(&peer_manager);
@@ -114,6 +98,5 @@ pub async fn run() -> anyhow::Result<()> {
     // .await;
 
     // // Stop the background processor.
-    // background_processor.stop().unwrap();
     Ok(())
 }

@@ -1,6 +1,6 @@
 use crate::{
-    bitcoind, chain_monitor, channel_manager, config::Config, invoice_payer, keys, ldk_events,
-    ln_peers, logger, persistence, scorer, uncertainty_graph,
+    background, bitcoind, chain_monitor, channel_manager, config::Config, invoice_payer, keys,
+    ldk_events, ln_peers, logger, persistence, scorer, uncertainty_graph,
 };
 use lightning_block_sync::{poll, SpvClient, UnboundedCache};
 use std::{ops::Deref, sync::Arc, time::Duration};
@@ -73,12 +73,24 @@ pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
     let scorer = scorer::init_scorer(&config.data_dir);
 
     // Step 17: Create InvoicePayer
-    invoice_payer::init_invoice_payer(
+    let invoice_payer = invoice_payer::init_invoice_payer(
         Arc::clone(&channel_manager),
         Arc::clone(&network_graph),
         Arc::clone(&scorer),
         event_handler,
         Arc::clone(&logger),
     );
+
+    let background_processor = background::start_background_processor(
+        &config.data_dir,
+        invoice_payer,
+        chain_monitor,
+        channel_manager,
+        network_gossip,
+        peer_manager,
+        logger,
+    );
+
+    background_processor.stop().unwrap();
     Ok(())
 }
