@@ -1,7 +1,7 @@
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use bitcoin::hash_types::BlockHash;
 use lightning::{
-    routing::network_graph::NetworkGraph,
+    routing::{network_graph::NetworkGraph, scoring::Scorer},
     util::ser::{Readable, Writeable},
 };
 use lightning_persister::FilesystemPersister;
@@ -42,4 +42,29 @@ pub(crate) fn persist_network(path: &Path, network_graph: &NetworkGraph) -> std:
     } else {
         Ok(())
     }
+}
+
+pub(crate) fn persist_scorer(path: &Path, scorer: &Scorer) -> std::io::Result<()> {
+    let mut tmp_path = path.to_path_buf().into_os_string();
+    tmp_path.push(".tmp");
+    let file = fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .open(&tmp_path)?;
+    let write_res = scorer.write(&mut BufWriter::new(file));
+    if let Err(e) = write_res.and_then(|_| fs::rename(&tmp_path, path)) {
+        let _ = fs::remove_file(&tmp_path);
+        Err(e)
+    } else {
+        Ok(())
+    }
+}
+
+pub(crate) fn read_scorer(path: &Path) -> Scorer {
+    if let Ok(file) = File::open(path) {
+        if let Ok(scorer) = Scorer::read(&mut BufReader::new(file)) {
+            return scorer;
+        }
+    }
+    Scorer::default()
 }

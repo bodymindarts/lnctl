@@ -1,8 +1,9 @@
 use crate::{
-    bitcoind, chain_monitor, channel_manager, config::Config, keys, ln_peers, logger, persistence,
-    uncertainty_graph,
+    bitcoind, chain_monitor, channel_manager, config::Config, keys, ldk_events, ln_peers, logger,
+    persistence, scorer, uncertainty_graph,
 };
-use std::sync::Arc;
+use lightning_block_sync::{poll, SpvClient, UnboundedCache};
+use std::{ops::Deref, sync::Arc, time::Duration};
 
 pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
     // Initialize our bitcoind client.
@@ -18,14 +19,16 @@ pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
     );
     let keys_manager = keys::init_keys_manager(&config.data_dir)?;
 
-    let mut channel_monitors = persister.read_channelmonitors(Arc::clone(&keys_manager))?;
+    let channel_monitors = persister.read_channelmonitors(Arc::clone(&keys_manager))?;
 
+    let mut cache = UnboundedCache::new();
     let (channel_manager, chain_tip) = channel_manager::init_channel_manager(
         &config.data_dir,
         channel_monitors,
         Arc::clone(&bitcoind_client),
         Arc::clone(&keys_manager),
         Arc::clone(&chain_monitor),
+        &mut cache,
         Arc::clone(&logger),
     )
     .await?;
@@ -42,6 +45,30 @@ pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
         Arc::clone(&network_gossip),
         Arc::clone(&keys_manager),
         Arc::clone(&logger),
+    );
+
+    // // Step 14: Connect and Disconnect Blocks
+    let channel_manager_listener = Arc::clone(&channel_manager);
+    let chain_monitor_listener = Arc::clone(&chain_monitor);
+    let bitcoind_block_source = Arc::clone(&bitcoind_client);
+    tokio::spawn(async move {
+        let mut derefed = bitcoind_block_source.deref();
+        let chain_poller = poll::ChainPoller::new(&mut derefed, bitcoind_block_source.network);
+        let chain_listener = (chain_monitor_listener, channel_manager_listener);
+        let mut spv_client = SpvClient::new(chain_tip, chain_poller, &mut cache, &chain_listener);
+        loop {
+            spv_client.poll_best_tip().await.unwrap();
+            tokio::time::sleep(Duration::from_secs(1)).await;
+        }
+    });
+
+    let scorer = scorer::init_scorer(&config.data_dir);
+
+    // Step 15: Handle LDK Events
+    ldk_events::init_ldk_events_handler(
+        Arc::clone(&bitcoind_client),
+        Arc::clone(&keys_manager),
+        Arc::clone(&channel_manager),
     );
 
     Ok(())

@@ -27,57 +27,6 @@ pub async fn run() -> anyhow::Result<()> {
 
     node::run_node(config).await?;
 
-    // // Step 14: Connect and Disconnect Blocks
-    // if chain_tip.is_none() {
-    //     chain_tip = Some(
-    //         init::validate_best_block_header(&mut bitcoind_client.deref())
-    //             .await
-    //             .unwrap(),
-    //     );
-    // }
-    // let channel_manager_listener = channel_manager.clone();
-    // let chain_monitor_listener = chain_monitor.clone();
-    // let bitcoind_block_source = bitcoind_client.clone();
-    // let network = args.network;
-    // tokio::spawn(async move {
-    //     let mut derefed = bitcoind_block_source.deref();
-    //     let chain_poller = poll::ChainPoller::new(&mut derefed, network);
-    //     let chain_listener = (chain_monitor_listener, channel_manager_listener);
-    //     let mut spv_client = SpvClient::new(
-    //         chain_tip.unwrap(),
-    //         chain_poller,
-    //         &mut cache,
-    //         &chain_listener,
-    //     );
-    //     loop {
-    //         spv_client.poll_best_tip().await.unwrap();
-    //         tokio::time::sleep(Duration::from_secs(1)).await;
-    //     }
-    // });
-
-    // // Step 15: Handle LDK Events
-    // let channel_manager_event_listener = channel_manager.clone();
-    // let keys_manager_listener = keys_manager.clone();
-    // // TODO: persist payment info to disk
-    // let inbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
-    // let outbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
-    // let inbound_pmts_for_events = inbound_payments.clone();
-    // let outbound_pmts_for_events = outbound_payments.clone();
-    // let network = args.network;
-    // let bitcoind_rpc = bitcoind_client.clone();
-    // let handle = tokio::runtime::Handle::current();
-    // let event_handler = move |event: &Event| {
-    //     handle.block_on(handle_ldk_events(
-    //         channel_manager_event_listener.clone(),
-    //         bitcoind_rpc.clone(),
-    //         keys_manager_listener.clone(),
-    //         inbound_pmts_for_events.clone(),
-    //         outbound_pmts_for_events.clone(),
-    //         network,
-    //         event,
-    //     ));
-    // };
-
     // // Step 16: Initialize routing Scorer
     // let scorer_path = format!("{}/scorer", ldk_data_dir.clone());
     // let scorer = Arc::new(Mutex::new(disk::read_scorer(Path::new(&scorer_path))));

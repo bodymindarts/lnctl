@@ -22,8 +22,9 @@ pub async fn init_channel_manager(
     bitcoind_client: Arc<BitcoindClient>,
     keys_manager: Arc<KeysManager>,
     chain_monitor: Arc<ChainMonitor>,
+    cache: &mut UnboundedCache,
     logger: Arc<LnCtlLogger>,
-) -> Result<(Arc<ChannelManager>, Option<poll::ValidatedBlockHeader>), anyhow::Error> {
+) -> Result<(Arc<ChannelManager>, poll::ValidatedBlockHeader), anyhow::Error> {
     let user_config = get_user_config();
     let mut restarting_node = true;
     let (channel_manager_blockhash, mut channel_manager) = {
@@ -66,9 +67,7 @@ pub async fn init_channel_manager(
     };
 
     let mut chain_listener_channel_monitors = Vec::new();
-    let mut cache = UnboundedCache::new();
-    let mut chain_tip: Option<poll::ValidatedBlockHeader> = None;
-    if restarting_node {
+    let chain_tip = if restarting_node {
         let mut chain_listeners = vec![(
             channel_manager_blockhash,
             &mut channel_manager as &mut dyn chain::Listen,
@@ -94,17 +93,19 @@ pub async fn init_channel_manager(
                 &mut monitor_listener_info.1 as &mut dyn chain::Listen,
             ));
         }
-        chain_tip = Some(
-            init::synchronize_listeners(
-                &mut bitcoind_client.deref(),
-                bitcoind_client.network,
-                &mut cache,
-                chain_listeners,
-            )
+        init::synchronize_listeners(
+            &mut bitcoind_client.deref(),
+            bitcoind_client.network,
+            cache,
+            chain_listeners,
+        )
+        .await
+        .expect("Couldn't synchronize chain listeners")
+    } else {
+        init::validate_best_block_header(&mut bitcoind_client.deref())
             .await
-            .unwrap(),
-        );
-    }
+            .expect("Couldn't validate best block header")
+    };
 
     for item in chain_listener_channel_monitors.drain(..) {
         let channel_monitor = item.1 .0;
