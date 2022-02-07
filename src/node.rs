@@ -85,11 +85,46 @@ pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
         &config.data_dir,
         invoice_payer,
         chain_monitor,
-        channel_manager,
+        Arc::clone(&channel_manager),
         network_gossip,
-        peer_manager,
+        Arc::clone(&peer_manager),
         logger,
     );
+
+    let connect_cm = Arc::clone(&channel_manager);
+    let connect_pm = Arc::clone(&peer_manager);
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(1));
+        loop {
+            interval.tick().await;
+            match persistence::read_channel_peer_data(&config.data_dir) {
+                Ok(info) => {
+                    let peers = connect_pm.get_peer_node_ids();
+                    for node_id in connect_cm
+                        .list_channels()
+                        .iter()
+                        .map(|chan| chan.counterparty.node_id)
+                        .filter(|id| !peers.contains(id))
+                    {
+                        for (pubkey, peer_addr) in info.iter() {
+                            if *pubkey == node_id {
+                                let _ = ln_peers::do_connect_peer(
+                                    *pubkey,
+                                    peer_addr.clone(),
+                                    Arc::clone(&connect_pm),
+                                )
+                                .await;
+                            }
+                        }
+                    }
+                }
+                Err(e) => println!(
+                    "ERROR: errored reading channel peer info from disk: {:?}",
+                    e
+                ),
+            }
+        }
+    });
 
     background_processor.stop().unwrap();
     Ok(())

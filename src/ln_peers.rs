@@ -2,6 +2,7 @@ use super::{
     bitcoind::BitcoindClient, channel_manager::ChannelManager, logger::LnCtlLogger,
     uncertainty_graph::ArcNetGraphMsgHandler,
 };
+use bitcoin::secp256k1::PublicKey;
 use lightning::{
     chain::{
         self, chainmonitor,
@@ -13,8 +14,11 @@ use lightning::{
 use lightning_net_tokio::SocketDescriptor;
 use lightning_persister::FilesystemPersister;
 use rand::{self, Rng};
-use std::sync::Arc;
-use std::time::SystemTime;
+use std::{
+    net::SocketAddr,
+    sync::Arc,
+    time::{Duration, SystemTime},
+};
 
 type ChainMonitor = chainmonitor::ChainMonitor<
     InMemorySigner,
@@ -76,4 +80,35 @@ pub fn init_peer_manager(
         }
     });
     peer_manager
+}
+
+pub(crate) async fn do_connect_peer(
+    pubkey: PublicKey,
+    peer_addr: SocketAddr,
+    peer_manager: Arc<LnPeers>,
+) -> Result<(), ()> {
+    match lightning_net_tokio::connect_outbound(Arc::clone(&peer_manager), pubkey, peer_addr).await
+    {
+        Some(connection_closed_future) => {
+            let mut connection_closed_future = Box::pin(connection_closed_future);
+            loop {
+                match futures::poll!(&mut connection_closed_future) {
+                    std::task::Poll::Ready(_) => {
+                        return Err(());
+                    }
+                    std::task::Poll::Pending => {}
+                }
+                // Avoid blocking the tokio context by sleeping a bit
+                match peer_manager
+                    .get_peer_node_ids()
+                    .iter()
+                    .find(|id| **id == pubkey)
+                {
+                    Some(_) => return Ok(()),
+                    None => tokio::time::sleep(Duration::from_millis(10)).await,
+                }
+            }
+        }
+        None => Err(()),
+    }
 }
