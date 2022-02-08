@@ -14,11 +14,7 @@ use lightning::{
 use lightning_net_tokio::SocketDescriptor;
 use lightning_persister::FilesystemPersister;
 use rand::{self, Rng};
-use std::{
-    net::SocketAddr,
-    sync::Arc,
-    time::{Duration, SystemTime},
-};
+use std::{net::SocketAddr, sync::Arc, time::Duration};
 
 type ChainMonitor = chainmonitor::ChainMonitor<
     InMemorySigner,
@@ -45,9 +41,6 @@ pub fn init_peer_manager(
     keys_manager: Arc<KeysManager>,
     logger: Arc<LnCtlLogger>,
 ) -> Arc<LnPeers> {
-    let cur = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap();
     let mut ephemeral_bytes = [0; 32];
     rand::thread_rng().fill_bytes(&mut ephemeral_bytes);
     let lightning_msg_handler = MessageHandler {
@@ -58,7 +51,7 @@ pub fn init_peer_manager(
         lightning_msg_handler,
         keys_manager.get_node_secret(),
         &ephemeral_bytes,
-        logger.clone(),
+        logger,
         Arc::new(IgnoringMessageHandler {}),
     ));
 

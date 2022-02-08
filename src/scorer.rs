@@ -1,13 +1,13 @@
 use crate::persistence;
 use lightning::routing::scoring::Scorer;
 use std::{
-    path::{Path, PathBuf},
+    path::Path,
     sync::{Arc, Mutex},
     time::Duration,
 };
 
-pub(crate) fn init_scorer(data_dir: &PathBuf) -> Arc<Mutex<Scorer>> {
-    let scorer_path = format!("{}/scorer", data_dir.as_path().display());
+pub(crate) fn init_scorer(data_dir: &Path) -> Arc<Mutex<Scorer>> {
+    let scorer_path = format!("{}/scorer", data_dir.display());
     let scorer = Arc::new(Mutex::new(persistence::read_scorer(Path::new(
         &scorer_path,
     ))));

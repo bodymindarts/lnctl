@@ -11,13 +11,13 @@ use lightning::{
     util::{config::UserConfig, ser::ReadableArgs},
 };
 use lightning_block_sync::{init, poll, UnboundedCache};
-use std::{fs, ops::Deref, path::PathBuf, sync::Arc};
+use std::{fs, ops::Deref, path::Path, sync::Arc};
 
 pub(crate) type ChannelManager =
     SimpleArcChannelManager<ChainMonitor, BitcoindClient, BitcoindClient, LnCtlLogger>;
 
 pub async fn init_channel_manager(
-    data_dir: &PathBuf,
+    data_dir: &Path,
     mut channel_monitors: Vec<(BlockHash, ChannelMonitor<InMemorySigner>)>,
     bitcoind_client: Arc<BitcoindClient>,
     keys_manager: Arc<KeysManager>,
@@ -28,7 +28,7 @@ pub async fn init_channel_manager(
     let user_config = get_user_config();
     let mut restarting_node = true;
     let (channel_manager_blockhash, mut channel_manager) = {
-        if let Ok(mut f) = fs::File::open(format!("{}/manager", data_dir.as_path().display())) {
+        if let Ok(mut f) = fs::File::open(format!("{}/manager", data_dir.display())) {
             let mut channel_monitor_mut_references = Vec::new();
             for (_, channel_monitor) in channel_monitors.iter_mut() {
                 channel_monitor_mut_references.push(channel_monitor);

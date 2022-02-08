@@ -1,6 +1,4 @@
-use crate::{
-    bitcoind::BitcoindClient, channel_manager::ChannelManager, hex_utils, logger::LnCtlLogger,
-};
+use crate::{channel_manager::ChannelManager, logger::LnCtlLogger};
 use lightning::{
     routing::{network_graph::NetworkGraph, scoring::Scorer},
     util::events::EventHandler,
@@ -19,12 +17,12 @@ pub(crate) fn init_invoice_payer<E: EventHandler>(
     event_handler: E,
     logger: Arc<LnCtlLogger>,
 ) -> Arc<InvoicePayer<E>> {
-    let router = DefaultRouter::new(network_graph.clone(), logger.clone());
+    let router = DefaultRouter::new(network_graph, logger.clone());
     Arc::new(InvoicePayer::new(
         channel_manager.clone(),
         router,
-        scorer.clone(),
-        logger.clone(),
+        scorer,
+        logger,
         event_handler,
         payment::RetryAttempts(5),
     ))

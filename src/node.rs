@@ -111,7 +111,7 @@ pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
                             if *pubkey == node_id {
                                 let _ = ln_peers::do_connect_peer(
                                     *pubkey,
-                                    peer_addr.clone(),
+                                    *peer_addr,
                                     Arc::clone(&connect_pm),
                                 )
                                 .await;

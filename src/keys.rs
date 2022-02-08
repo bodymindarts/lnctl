@@ -1,15 +1,15 @@
 use anyhow::anyhow;
 use lightning::{chain::keysinterface::KeysManager, util::ser::Writer};
 use rand::{thread_rng, Rng};
-use std::path::PathBuf;
+use std::path::Path;
 use std::sync::Arc;
 use std::{
     fs::{self, File},
     time::SystemTime,
 };
 
-pub fn init_keys_manager(data_dir: &PathBuf) -> Result<Arc<KeysManager>, anyhow::Error> {
-    let keys_seed_path = format!("{}/keys_seed", data_dir.as_path().display());
+pub fn init_keys_manager(data_dir: &Path) -> Result<Arc<KeysManager>, anyhow::Error> {
+    let keys_seed_path = format!("{}/keys_seed", data_dir.display());
     let keys_seed = if let Ok(seed) = fs::read(keys_seed_path.clone()) {
         assert_eq!(seed.len(), 32);
         let mut key = [0; 32];

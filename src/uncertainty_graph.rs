@@ -4,10 +4,7 @@ use lightning::{
     chain, routing::network_graph::NetGraphMsgHandler, routing::network_graph::NetworkGraph,
 };
 use std::time::Duration;
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::{path::Path, sync::Arc};
 
 pub(crate) type ArcNetGraphMsgHandler = Arc<
     NetGraphMsgHandler<Arc<NetworkGraph>, Arc<dyn chain::Access + Send + Sync>, Arc<LnCtlLogger>>,
@@ -15,11 +12,11 @@ pub(crate) type ArcNetGraphMsgHandler = Arc<
 
 pub fn init_uncertainty_graph(
     network: bitcoin::Network,
-    data_dir: &PathBuf,
+    data_dir: &Path,
     logger: Arc<LnCtlLogger>,
 ) -> anyhow::Result<(ArcNetGraphMsgHandler, Arc<NetworkGraph>)> {
     let genesis = genesis_block(network).header.block_hash();
-    let network_graph_path = format!("{}/network_graph", data_dir.as_path().display());
+    let network_graph_path = format!("{}/network_graph", data_dir.display());
     let network_graph = Arc::new(persistence::read_network(
         Path::new(&network_graph_path),
         genesis,

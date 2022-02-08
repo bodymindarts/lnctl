@@ -10,14 +10,14 @@ use std::{
     fs::{self, File},
     io::{BufRead, BufReader, BufWriter},
     net::{SocketAddr, ToSocketAddrs},
-    path::{Path, PathBuf},
+    path::Path,
     sync::Arc,
 };
 
-pub fn init_persister(data_dir: &PathBuf) -> Result<Arc<FilesystemPersister>, anyhow::Error> {
+pub fn init_persister(data_dir: &Path) -> Result<Arc<FilesystemPersister>, anyhow::Error> {
     fs::create_dir_all(data_dir).context("failed to create data directory")?;
     Ok(Arc::new(FilesystemPersister::new(
-        data_dir.as_path().display().to_string(),
+        data_dir.display().to_string(),
     )))
 }
 
@@ -72,9 +72,9 @@ pub(crate) fn read_scorer(path: &Path) -> Scorer {
 }
 
 pub(crate) fn read_channel_peer_data(
-    data_dir: &PathBuf,
+    data_dir: &Path,
 ) -> Result<HashMap<PublicKey, SocketAddr>, std::io::Error> {
-    let path = format!("{}/channel_peer_data", data_dir.as_path().display());
+    let path = format!("{}/channel_peer_data", data_dir.display());
     let mut peer_data = HashMap::new();
     if !Path::new(&path).exists() {
         return Ok(HashMap::new());
@@ -95,7 +95,7 @@ pub(crate) fn read_channel_peer_data(
 pub(crate) fn parse_peer_info(
     peer_pubkey_and_ip_addr: String,
 ) -> Result<(PublicKey, SocketAddr), std::io::Error> {
-    let mut pubkey_and_addr = peer_pubkey_and_ip_addr.split("@");
+    let mut pubkey_and_addr = peer_pubkey_and_ip_addr.split('@');
     let pubkey = pubkey_and_addr.next();
     let peer_addr_str = pubkey_and_addr.next();
     if peer_addr_str.is_none() || peer_addr_str.is_none() {

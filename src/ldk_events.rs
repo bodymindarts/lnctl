@@ -19,7 +19,7 @@ use std::{
 };
 
 pub(crate) enum HTLCStatus {
-    Pending,
+    _Pending,
     Succeeded,
     Failed,
 }
@@ -51,21 +51,18 @@ pub fn init_ldk_events_handler(
     // // TODO: persist payment info to disk
     let inbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
     let outbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
-    let inbound_pmts_for_events = inbound_payments.clone();
-    let outbound_pmts_for_events = outbound_payments.clone();
-    let bitcoind_rpc = bitcoind_client.clone();
     let handle = tokio::runtime::Handle::current();
-    return move |event: &Event| {
+    move |event: &Event| {
         handle.block_on(handle_ldk_events(
             channel_manager.clone(),
             bitcoind_client.clone(),
             keys_manager.clone(),
-            inbound_pmts_for_events.clone(),
-            outbound_pmts_for_events.clone(),
+            inbound_payments.clone(),
+            outbound_payments.clone(),
             bitcoind_client.network,
             event,
         ));
-    };
+    }
 }
 
 async fn handle_ldk_events(
@@ -109,12 +106,12 @@ async fn handle_ldk_events(
             let signed_tx = bitcoind_client
                 .sign_raw_transaction_with_wallet(funded_tx.hex)
                 .await;
-            assert_eq!(signed_tx.complete, true);
+            assert!(signed_tx.complete);
             let final_tx: Transaction =
                 encode::deserialize(&hex_utils::to_vec(&signed_tx.hex).unwrap()).unwrap();
             // Give the funding transaction back to LDK for opening the channel.
             if channel_manager
-                .funding_transaction_generated(&temporary_channel_id, final_tx)
+                .funding_transaction_generated(temporary_channel_id, final_tx)
                 .is_err()
             {
                 println!(
@@ -207,8 +204,8 @@ async fn handle_ldk_events(
             io::stdout().flush().unwrap();
 
             let mut payments = outbound_payments.lock().unwrap();
-            if payments.contains_key(&payment_hash) {
-                let payment = payments.get_mut(&payment_hash).unwrap();
+            if payments.contains_key(payment_hash) {
+                let payment = payments.get_mut(payment_hash).unwrap();
                 payment.status = HTLCStatus::Failed;
             }
         }
@@ -246,7 +243,7 @@ async fn handle_ldk_events(
         }
         Event::SpendableOutputs { outputs } => {
             let destination_address = bitcoind_client.get_new_address().await;
-            let output_descriptors = &outputs.iter().map(|a| a).collect::<Vec<_>>();
+            let output_descriptors = &outputs.iter().collect::<Vec<_>>();
             let tx_feerate =
                 bitcoind_client.get_est_sat_per_1000_weight(ConfirmationTarget::Normal);
             let spending_tx = keys_manager
