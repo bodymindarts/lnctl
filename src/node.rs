@@ -91,6 +91,7 @@ pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
         logger,
     );
 
+    // Regularly reconnect to channel peers.
     let connect_cm = Arc::clone(&channel_manager);
     let connect_pm = Arc::clone(&peer_manager);
     tokio::spawn(async move {
@@ -126,6 +127,26 @@ pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
         }
     });
 
+    // Regularly broadcast our node_announcement. This is only required (or possible) if we have
+    // some public channels, and is only useful if we have public listen address(es) to announce.
+    // In a production environment, this should occur only after the announcement of new channels
+    // to avoid churn in the global network graph.
+    let chan_manager = Arc::clone(&channel_manager);
+    if let Some(net_addr) = config.net_address {
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(Duration::from_secs(60));
+            loop {
+                interval.tick().await;
+                chan_manager.broadcast_node_announcement(
+                    [0; 3],
+                    config.announced_node_name,
+                    vec![net_addr.clone()],
+                );
+            }
+        });
+    }
+
+    // Stop the background processor.
     background_processor.stop().unwrap();
     Ok(())
 }
