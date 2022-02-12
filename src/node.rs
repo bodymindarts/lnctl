@@ -6,6 +6,7 @@ use lightning_block_sync::{poll, SpvClient, UnboundedCache};
 use std::{ops::Deref, sync::Arc, time::Duration};
 
 pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
+    let announced_node_name = config.announced_node_name();
     // Initialize our bitcoind client.
     let bitcoind_client = bitcoind::init_bitcoind_client(config.bitcoind_config).await?;
 
@@ -139,7 +140,7 @@ pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
                 interval.tick().await;
                 chan_manager.broadcast_node_announcement(
                     [0; 3],
-                    config.announced_node_name,
+                    announced_node_name,
                     vec![net_addr.clone()],
                 );
             }

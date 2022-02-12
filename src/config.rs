@@ -1,19 +1,33 @@
 use anyhow::*;
 use lightning::ln::msgs::NetAddress;
 use serde::Deserialize;
-use std::net::{IpAddr, SocketAddr};
-use std::path::PathBuf;
+use std::{
+    env,
+    net::{IpAddr, SocketAddr},
+    path::PathBuf,
+};
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
     #[serde(rename = "bitcoind")]
     pub bitcoind_config: BitcoindConfig,
+    #[serde(default = "default_data_dir")]
     pub data_dir: PathBuf,
+    #[serde(default = "default_listen_port")]
     pub listen_port: u16,
     pub public_address: Option<SocketAddr>,
     #[serde(skip_deserializing)]
     pub net_address: Option<NetAddress>,
-    pub announced_node_name: [u8; 32],
+    pub node_name: Option<String>,
+}
+
+fn default_data_dir() -> PathBuf {
+    let mut path = env::current_dir().unwrap();
+    path.push(".lnctl");
+    path
+}
+fn default_listen_port() -> u16 {
+    9735
 }
 
 impl Config {
@@ -41,6 +55,19 @@ impl Config {
                     })
                 }
             }
+        }
+    }
+    pub fn announced_node_name(&self) -> [u8; 32] {
+        match self.node_name.as_ref() {
+            Some(s) => {
+                if s.len() > 32 {
+                    panic!("Node Alias can not be longer than 32 bytes");
+                }
+                let mut bytes = [0; 32];
+                bytes[..s.len()].copy_from_slice(s.as_bytes());
+                bytes
+            }
+            None => [0; 32],
         }
     }
 }
