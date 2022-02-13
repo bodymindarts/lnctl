@@ -10,7 +10,7 @@ struct Cli {
     config: Option<PathBuf>,
 
     #[clap(subcommand)]
-    command: Option<Commands>,
+    command: Commands,
 }
 
 #[derive(Subcommand)]
@@ -25,20 +25,11 @@ pub async fn run() -> anyhow::Result<()> {
     let config_path = cli.config.unwrap_or_else(|| PathBuf::from(DEFAULT_CONFIG));
     let config = Config::from_path(config_path)?;
 
-    node::run_node(config).await?;
-
-    // // Start the CLI.
-    // cli::poll_for_user_input(
-    //     invoice_payer.clone(),
-    //     peer_manager.clone(),
-    //     channel_manager.clone(),
-    //     keys_manager.clone(),
-    //     inbound_payments,
-    //     outbound_payments,
-    //     ldk_data_dir.clone(),
-    //     network,
-    // )
-    // .await;
+    match cli.command {
+        Commands::Server {} => {
+            node::run_node(config).await?;
+        }
+    }
 
     Ok(())
 }
