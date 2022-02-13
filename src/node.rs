@@ -2,7 +2,9 @@ use crate::{
     background, bitcoind, chain_monitor, channel_manager, config::Config, invoice_payer, keys,
     ldk_events, ln_peers, logger, persistence, scorer, uncertainty_graph,
 };
+use ctrlc;
 use lightning_block_sync::{poll, SpvClient, UnboundedCache};
+use std::sync::mpsc::channel;
 use std::{ops::Deref, sync::Arc, time::Duration};
 
 pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
@@ -147,7 +149,13 @@ pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
         });
     }
 
-    // Stop the background processor.
+    let (tx, rx) = channel();
+    ctrlc::set_handler(move || tx.send(()).expect("Could not send signal on channel."))
+        .expect("Error setting Ctrl-C handler");
+
+    println!("Running");
+    rx.recv().expect("Could not receive from channel.");
+    println!("Exiting lnctl");
     background_processor.stop().unwrap();
     Ok(())
 }
