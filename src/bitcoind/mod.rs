@@ -15,8 +15,12 @@ pub async fn init_bitcoind_client(
         network,
     }: BitcoindConfig,
 ) -> Result<Arc<BitcoindClient>, anyhow::Error> {
-    let rpc_password =
+    let mut rpc_password =
         fs::read_to_string(rpc_password_file).context("Could not read bitcoind_password_file")?;
+    if rpc_password.ends_with('\n') {
+        rpc_password.pop();
+    }
+
     let client = Arc::new(
         BitcoindClient::new(
             network,
