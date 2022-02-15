@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package lnctl;
+
+service Lnctl {
+  rpc ListPeers (ListPeersRequest) returns (ListPeersResponse) {}
+}
+
+message ListPeersRequest {}
+message ListPeersResponse {
+    repeated Peer peers = 1;
+}
+
+message Peer {
+  string pubkey = 1;
+}
