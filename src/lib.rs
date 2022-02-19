@@ -4,6 +4,7 @@ mod background;
 mod bitcoind;
 mod chain_monitor;
 mod channel_manager;
+mod client;
 mod config;
 mod grpc;
 mod hex_utils;

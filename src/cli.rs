@@ -1,6 +1,6 @@
 use crate::{
-    bitcoind::BitcoindClient, config::Config, grpc, ln_peers::ChainMonitor, logger::LnCtlLogger,
-    node,
+    bitcoind::BitcoindClient, client, config::Config, grpc, ln_peers::ChainMonitor,
+    logger::LnCtlLogger, node,
 };
 use clap::{Parser, Subcommand};
 use lightning::{
@@ -25,6 +25,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Server {},
+    ListPeers {},
 }
 
 const DEFAULT_CONFIG: &str = "lnctl.yml";
@@ -37,6 +38,9 @@ pub async fn run() -> anyhow::Result<()> {
     match cli.command {
         Commands::Server {} => {
             run_server(config).await?;
+        }
+        Commands::ListPeers {} => {
+            client::list_peers(config).await?;
         }
     }
 
