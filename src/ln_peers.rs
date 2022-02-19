@@ -16,7 +16,7 @@ use lightning_persister::FilesystemPersister;
 use rand::{self, Rng};
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 
-type ChainMonitor = chainmonitor::ChainMonitor<
+pub type ChainMonitor = chainmonitor::ChainMonitor<
     InMemorySigner,
     Arc<dyn Filter + Send + Sync>,
     Arc<BitcoindClient>,

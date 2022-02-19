@@ -1,4 +1,5 @@
-announced_node_name: "lnctl"
+node:
+  announced_node_name: "lnctl"
 bitcoind:
   rpc_user: "rpcuser"
   rpc_password_file: dev/bitcoind/rpc_password

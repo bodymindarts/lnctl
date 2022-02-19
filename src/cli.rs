@@ -1,6 +1,15 @@
-use crate::{config::Config, node};
+use crate::{
+    bitcoind::BitcoindClient, config::Config, grpc, ln_peers::ChainMonitor, logger::LnCtlLogger,
+    node,
+};
 use clap::{Parser, Subcommand};
-use std::path::PathBuf;
+use lightning::{
+    chain,
+    ln::{channelmanager::SimpleArcChannelManager, peer_handler::IgnoringMessageHandler},
+    routing::network_graph::{NetGraphMsgHandler, NetworkGraph},
+};
+use lightning_net_tokio::SocketDescriptor;
+use std::{path::PathBuf, sync::Arc};
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -27,9 +36,32 @@ pub async fn run() -> anyhow::Result<()> {
 
     match cli.command {
         Commands::Server {} => {
-            node::run_node(config).await?;
+            run_server(config).await?;
         }
     }
 
+    Ok(())
+}
+
+async fn run_server(config: Config) -> anyhow::Result<()> {
+    let grpc_port = config.grpc_port;
+    let handles = node::run_node(config).await?;
+
+    grpc::start_server::<
+        SocketDescriptor,
+        Arc<LnCtlLogger>,
+        Arc<SimpleArcChannelManager<ChainMonitor, BitcoindClient, BitcoindClient, LnCtlLogger>>,
+        Arc<
+            NetGraphMsgHandler<
+                Arc<NetworkGraph>,
+                Arc<dyn chain::Access + Send + Sync>,
+                Arc<LnCtlLogger>,
+            >,
+        >,
+        Arc<IgnoringMessageHandler>,
+    >(grpc_port, handles.peer_manager)
+    .await?;
+
+    handles.background_processor.stop()?;
     Ok(())
 }

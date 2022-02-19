@@ -1,11 +1,6 @@
+use crate::ln_peers::LnPeers;
 use lightning::{
-    chain::{
-        self,
-        chaininterface::{BroadcasterInterface, ConfirmationTarget, FeeEstimator},
-        keysinterface::{KeysInterface, KeysManager, Sign},
-    },
     ln::{
-        channelmanager::ChannelManager,
         msgs::{ChannelMessageHandler, RoutingMessageHandler},
         peer_handler::{CustomMessageHandler, PeerManager, SocketDescriptor},
     },
@@ -63,7 +58,31 @@ where
     }
 }
 
-pub async fn start_server(port: u16) -> anyhow::Result<()> {
-    // Server::builder().serve(([0, 0, 0, 0], port).into()).await?
+pub async fn start_server<
+    Descriptor: SocketDescriptor,
+    L: Deref,
+    CM: Deref,
+    RM: Deref,
+    CMH: Deref,
+>(
+    port: u16,
+    peer_manager: Arc<LnPeers>,
+) -> anyhow::Result<()>
+where
+    L::Target: Logger,
+    CM::Target: ChannelMessageHandler,
+    RM::Target: RoutingMessageHandler,
+    CMH::Target: CustomMessageHandler,
+    L::Target: Logger + Send + Sync,
+    Descriptor: Send + Sync + 'static,
+    CM: 'static + Send + Sync,
+    RM: 'static + Send + Sync,
+    CMH: 'static + Send + Sync,
+    L: 'static + Send + Sync,
+{
+    Server::builder()
+        .add_service(LnctlServer::new(LnCtlGrpc { peer_manager }))
+        .serve(([0, 0, 0, 0], port).into())
+        .await?;
     Ok(())
 }

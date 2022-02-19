@@ -2,13 +2,17 @@ use crate::{
     background, bitcoind, chain_monitor, channel_manager, config::Config, invoice_payer, keys,
     ldk_events, ln_peers, logger, persistence, scorer, uncertainty_graph,
 };
-use ctrlc;
+use lightning_background_processor::BackgroundProcessor;
 use lightning_block_sync::{poll, SpvClient, UnboundedCache};
-use std::sync::mpsc::channel;
 use std::{ops::Deref, sync::Arc, time::Duration};
 
-pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
-    let announced_node_name = config.announced_node_name();
+pub struct Handles {
+    pub background_processor: BackgroundProcessor,
+    pub peer_manager: Arc<ln_peers::LnPeers>,
+}
+
+pub async fn run_node(config: Config) -> anyhow::Result<Handles> {
+    let announced_node_name = config.node.announced_node_name();
     // Initialize our bitcoind client.
     let bitcoind_client = bitcoind::init_bitcoind_client(config.bitcoind_config).await?;
 
@@ -43,7 +47,7 @@ pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
     )?;
 
     let peer_manager = ln_peers::init_peer_manager(
-        config.listen_port,
+        config.node.listen_port,
         Arc::clone(&channel_manager),
         Arc::clone(&network_gossip),
         Arc::clone(&keys_manager),
@@ -135,7 +139,7 @@ pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
     // In a production environment, this should occur only after the announcement of new channels
     // to avoid churn in the global network graph.
     let chan_manager = Arc::clone(&channel_manager);
-    if let Some(net_addr) = config.net_address {
+    if let Some(net_addr) = config.node.net_address {
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(Duration::from_secs(60));
             loop {
@@ -149,13 +153,8 @@ pub async fn run_node(config: Config) -> Result<(), anyhow::Error> {
         });
     }
 
-    let (tx, rx) = channel();
-    ctrlc::set_handler(move || tx.send(()).expect("Could not send signal on channel."))
-        .expect("Error setting Ctrl-C handler");
-
-    println!("Running");
-    rx.recv().expect("Could not receive from channel.");
-    println!("Exiting lnctl");
-    background_processor.stop().unwrap();
-    Ok(())
+    Ok(Handles {
+        background_processor: background_processor,
+        peer_manager: peer_manager,
+    })
 }
