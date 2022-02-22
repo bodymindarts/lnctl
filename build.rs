@@ -1,4 +1,6 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tonic_build::configure().compile(&["proto/peers.proto"], &["proto"])?;
+    tonic_build::configure()
+        .type_attribute("Peer", "#[derive(serde::Serialize, serde::Deserialize)]")
+        .compile(&["proto/peers.proto"], &["proto"])?;
     Ok(())
 }

@@ -24,8 +24,8 @@ services:
     depends_on: [bitcoind]
     healthcheck:
       test: ["CMD-SHELL", "lncli -n regtest getinfo"]
-      interval: 5s
-      timeout: 5s
+      interval: 2s
+      timeout: 2s
       retries: 5
   lnd2:
     image: lightninglabs/lnd:v0.14.2-beta
@@ -38,6 +38,6 @@ services:
     depends_on: [bitcoind]
     healthcheck:
       test: ["CMD-SHELL", "lncli -n regtest getinfo"]
-      interval: 5s
-      timeout: 5s
+      interval: 2s
+      timeout: 2s
       retries: 5

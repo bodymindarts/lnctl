@@ -7,7 +7,7 @@ FAUCET="mgWUuj1J1N882jmqFxtDepEC73Rr22E9GU"
 
 start_network() {
   docker compose up -d bitcoind
-  genblocks
+  genblocks 250
   docker compose up integration-deps
   lnd1_pubkey=$(lnd_cmd lnd1 getinfo | jq -r '.identity_pubkey')
   lnd2_pubkey=$(lnd_cmd lnd2 getinfo | jq -r '.identity_pubkey')
@@ -46,7 +46,7 @@ lnd_cmd() {
 }
 
 genblocks() {
-  docker compose exec -T bitcoind bitcoin-cli -regtest generatetoaddress 250 ${FAUCET}
+  docker compose exec -T bitcoind bitcoin-cli -regtest generatetoaddress ${1} ${FAUCET}
 }
 
 # Run the given command in the background. Useful for starting a
