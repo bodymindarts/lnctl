@@ -1,6 +1,6 @@
 use crate::{
     chain_monitor::ChainMonitor, channel_manager::ChannelManager, invoice_payer::InvoicePayer,
-    ln_peers::LnPeers, logger::LnCtlLogger, uncertainty_graph::ArcNetGraphMsgHandler,
+    logger::LnCtlLogger, peers::LnCtlPeers, uncertainty_graph::ArcNetGraphMsgHandler,
 };
 use lightning::util::events::EventHandler;
 use lightning_background_processor::BackgroundProcessor;
@@ -13,7 +13,7 @@ pub(crate) fn start_background_processor<E: EventHandler + Send + Sync + 'static
     chain_monitor: Arc<ChainMonitor>,
     channel_manager: Arc<ChannelManager>,
     network_gossip: ArcNetGraphMsgHandler,
-    peer_manager: Arc<LnPeers>,
+    peer_manager: Arc<LnCtlPeers>,
     logger: Arc<LnCtlLogger>,
 ) -> BackgroundProcessor {
     let file_name = data_dir.display().to_string();

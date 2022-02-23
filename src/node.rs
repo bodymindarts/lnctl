@@ -1,6 +1,6 @@
 use crate::{
     background, bitcoind, chain_monitor, channel_manager, config::Config, invoice_payer, keys,
-    ldk_events, ln_peers, logger, persistence, scorer, uncertainty_graph,
+    ldk_events, logger, peers, persistence, scorer, uncertainty_graph,
 };
 use lightning_background_processor::BackgroundProcessor;
 use lightning_block_sync::{poll, SpvClient, UnboundedCache};
@@ -8,7 +8,7 @@ use std::{ops::Deref, sync::Arc, time::Duration};
 
 pub struct Handles {
     pub background_processor: BackgroundProcessor,
-    pub peer_manager: Arc<ln_peers::LnPeers>,
+    pub peer_manager: Arc<peers::LnCtlPeers>,
     pub channel_manager: Arc<channel_manager::ChannelManager>,
 }
 
@@ -47,7 +47,7 @@ pub async fn run_node(config: Config) -> anyhow::Result<Handles> {
         Arc::clone(&logger),
     )?;
 
-    let peer_manager = ln_peers::init_peer_manager(
+    let peer_manager = peers::init_peer_manager(
         config.node.listen_port,
         Arc::clone(&channel_manager),
         Arc::clone(&network_gossip),
@@ -117,7 +117,7 @@ pub async fn run_node(config: Config) -> anyhow::Result<Handles> {
                     {
                         for (pubkey, peer_addr) in info.iter() {
                             if *pubkey == node_id {
-                                let _ = ln_peers::do_connect_peer(
+                                let _ = peers::do_connect_peer(
                                     *pubkey,
                                     *peer_addr,
                                     Arc::clone(&connect_pm),

@@ -25,7 +25,7 @@ pub type ChainMonitor = chainmonitor::ChainMonitor<
     Arc<FilesystemPersister>,
 >;
 
-pub(crate) type LnPeers = SimpleArcPeerManager<
+pub(crate) type LnCtlPeers = SimpleArcPeerManager<
     SocketDescriptor,
     ChainMonitor,
     BitcoindClient,
@@ -40,14 +40,14 @@ pub fn init_peer_manager(
     network_gossip: ArcNetGraphMsgHandler,
     keys_manager: Arc<KeysManager>,
     logger: Arc<LnCtlLogger>,
-) -> Arc<LnPeers> {
+) -> Arc<LnCtlPeers> {
     let mut ephemeral_bytes = [0; 32];
     rand::thread_rng().fill_bytes(&mut ephemeral_bytes);
     let lightning_msg_handler = MessageHandler {
         chan_handler: channel_manager.clone(),
         route_handler: network_gossip.clone(),
     };
-    let peer_manager = Arc::new(LnPeers::new(
+    let peer_manager = Arc::new(LnCtlPeers::new(
         lightning_msg_handler,
         keys_manager.get_node_secret(),
         &ephemeral_bytes,
@@ -78,7 +78,7 @@ pub fn init_peer_manager(
 pub(crate) async fn do_connect_peer(
     pubkey: PublicKey,
     peer_addr: SocketAddr,
-    peer_manager: Arc<LnPeers>,
+    peer_manager: Arc<LnCtlPeers>,
 ) -> Result<(), ()> {
     match lightning_net_tokio::connect_outbound(Arc::clone(&peer_manager), pubkey, peer_addr).await
     {
