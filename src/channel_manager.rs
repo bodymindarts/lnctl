@@ -13,7 +13,7 @@ use lightning::{
 use lightning_block_sync::{init, poll, UnboundedCache};
 use std::{fs, ops::Deref, path::Path, sync::Arc};
 
-pub(crate) type ChannelManager =
+pub(crate) type LnCtlChannelManager =
     SimpleArcChannelManager<ChainMonitor, BitcoindClient, BitcoindClient, LnCtlLogger>;
 
 pub async fn init_channel_manager(
@@ -24,7 +24,7 @@ pub async fn init_channel_manager(
     chain_monitor: Arc<ChainMonitor>,
     cache: &mut UnboundedCache,
     logger: Arc<LnCtlLogger>,
-) -> Result<(Arc<ChannelManager>, poll::ValidatedBlockHeader), anyhow::Error> {
+) -> Result<(Arc<LnCtlChannelManager>, poll::ValidatedBlockHeader), anyhow::Error> {
     let user_config = get_user_config();
     let mut restarting_node = true;
     let (channel_manager_blockhash, mut channel_manager) = {
@@ -42,7 +42,7 @@ pub async fn init_channel_manager(
                 user_config,
                 channel_monitor_mut_references,
             );
-            <(BlockHash, ChannelManager)>::read(&mut f, read_args).unwrap()
+            <(BlockHash, LnCtlChannelManager)>::read(&mut f, read_args).unwrap()
         } else {
             // We're starting a fresh node.
             restarting_node = false;

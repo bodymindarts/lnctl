@@ -1,4 +1,4 @@
-use crate::{channel_manager::ChannelManager as LnctlChannelManager, peers::LnCtlPeers};
+use crate::{channel_manager::LnCtlChannelManager, peers::LnCtlPeers};
 use lightning::{
     chain::{
         self,
@@ -112,7 +112,7 @@ where
 pub async fn start_server(
     port: u16,
     peer_manager: Arc<LnCtlPeers>,
-    channel_manager: Arc<LnctlChannelManager>,
+    channel_manager: Arc<LnCtlChannelManager>,
 ) -> anyhow::Result<()> {
     Server::builder()
         .add_service(LnctlServer::new(LnCtlGrpc {

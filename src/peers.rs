@@ -1,5 +1,5 @@
 use super::{
-    bitcoind::BitcoindClient, channel_manager::ChannelManager, logger::LnCtlLogger,
+    bitcoind::BitcoindClient, channel_manager::LnCtlChannelManager, logger::LnCtlLogger,
     uncertainty_graph::ArcNetGraphMsgHandler,
 };
 use bitcoin::secp256k1::PublicKey;
@@ -36,7 +36,7 @@ pub(crate) type LnCtlPeers = SimpleArcPeerManager<
 
 pub fn init_peer_manager(
     listening_port: u16,
-    channel_manager: Arc<ChannelManager>,
+    channel_manager: Arc<LnCtlChannelManager>,
     network_gossip: ArcNetGraphMsgHandler,
     keys_manager: Arc<KeysManager>,
     logger: Arc<LnCtlLogger>,

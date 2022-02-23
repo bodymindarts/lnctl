@@ -9,7 +9,7 @@ use std::{ops::Deref, sync::Arc, time::Duration};
 pub struct Handles {
     pub background_processor: BackgroundProcessor,
     pub peer_manager: Arc<peers::LnCtlPeers>,
-    pub channel_manager: Arc<channel_manager::ChannelManager>,
+    pub channel_manager: Arc<channel_manager::LnCtlChannelManager>,
 }
 
 pub async fn run_node(config: Config) -> anyhow::Result<Handles> {

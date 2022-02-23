@@ -1,4 +1,4 @@
-use crate::{bitcoind::BitcoindClient, channel_manager::ChannelManager, hex_utils};
+use crate::{bitcoind::BitcoindClient, channel_manager::LnCtlChannelManager, hex_utils};
 use bitcoin::{consensus::encode, secp256k1::Secp256k1, Network, Transaction};
 use bitcoin_bech32::WitnessProgram;
 use lightning::{
@@ -46,7 +46,7 @@ pub(crate) type PaymentInfoStorage = Arc<Mutex<HashMap<PaymentHash, PaymentInfo>
 pub fn init_ldk_events_handler(
     bitcoind_client: Arc<BitcoindClient>,
     keys_manager: Arc<KeysManager>,
-    channel_manager: Arc<ChannelManager>,
+    channel_manager: Arc<LnCtlChannelManager>,
 ) -> impl EventHandler {
     // // TODO: persist payment info to disk
     let inbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
@@ -66,7 +66,7 @@ pub fn init_ldk_events_handler(
 }
 
 async fn handle_ldk_events(
-    channel_manager: Arc<ChannelManager>,
+    channel_manager: Arc<LnCtlChannelManager>,
     bitcoind_client: Arc<BitcoindClient>,
     keys_manager: Arc<KeysManager>,
     inbound_payments: PaymentInfoStorage,
