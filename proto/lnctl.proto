@@ -3,7 +3,13 @@ syntax = "proto3";
 package lnctl;
 
 service Lnctl {
+  rpc GetNodeStatus(GetNodeStatusRequest) returns (GetNodeStatusResponse) {}
   rpc ListPeers (ListPeersRequest) returns (ListPeersResponse) {}
+}
+
+message GetNodeStatusRequest {}
+message GetNodeStatusResponse {
+  string addr = 1;
 }
 
 message ListPeersRequest {}

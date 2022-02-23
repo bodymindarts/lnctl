@@ -9,6 +9,7 @@ use std::{ops::Deref, sync::Arc, time::Duration};
 pub struct Handles {
     pub background_processor: BackgroundProcessor,
     pub peer_manager: Arc<ln_peers::LnPeers>,
+    pub channel_manager: Arc<channel_manager::ChannelManager>,
 }
 
 pub async fn run_node(config: Config) -> anyhow::Result<Handles> {
@@ -156,5 +157,6 @@ pub async fn run_node(config: Config) -> anyhow::Result<Handles> {
     Ok(Handles {
         background_processor: background_processor,
         peer_manager: peer_manager,
+        channel_manager: channel_manager,
     })
 }
