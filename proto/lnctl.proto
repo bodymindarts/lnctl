@@ -9,7 +9,7 @@ service Lnctl {
 
 message GetNodeStatusRequest {}
 message GetNodeStatusResponse {
-  string addr = 1;
+  string id = 1;
 }
 
 message ListPeersRequest {}

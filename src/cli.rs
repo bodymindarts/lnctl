@@ -17,6 +17,7 @@ struct Cli {
 enum Commands {
     Server {},
     ListPeers {},
+    NodeStatus {},
 }
 
 const DEFAULT_CONFIG: &str = "lnctl.yml";
@@ -32,6 +33,9 @@ pub async fn run() -> anyhow::Result<()> {
         }
         Commands::ListPeers {} => {
             client::list_peers(config).await?;
+        }
+        Commands::NodeStatus {} => {
+            client::get_node_status(config).await?;
         }
     }
 

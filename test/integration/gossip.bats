@@ -12,5 +12,7 @@ teardown() {
 
 @test "Node can start" {
   start_lnctl
+  peers=$(${lnctl} list-peers)
+  node_id=$(${lnctl} node-status)
   stop_lnctl
 }

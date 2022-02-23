@@ -88,7 +88,7 @@ where
     ) -> Result<Response<GetNodeStatusResponse>, Status> {
         let pubkey = self.channel_manager.get_our_node_id();
         let response = GetNodeStatusResponse {
-            addr: pubkey.to_string(),
+            id: pubkey.to_string(),
         };
         Ok(Response::new(response))
     }
