@@ -2,9 +2,10 @@ use crate::{
     background, bitcoind, chain_monitor, channel_manager, config::Config, invoice_payer, keys,
     ldk_events, logger, peers, persistence, scorer, uncertainty_graph,
 };
+use anyhow::Context;
 use lightning_background_processor::BackgroundProcessor;
 use lightning_block_sync::{poll, SpvClient, UnboundedCache};
-use std::{ops::Deref, sync::Arc, time::Duration};
+use std::{fs, ops::Deref, process, sync::Arc, time::Duration};
 
 pub struct Handles {
     pub background_processor: BackgroundProcessor,
@@ -13,6 +14,12 @@ pub struct Handles {
 }
 
 pub async fn run_node(config: Config) -> anyhow::Result<Handles> {
+    fs::create_dir_all(&config.data_dir).context("failed to create data dir")?;
+    fs::write(
+        format!("{}/pid", config.data_dir.display()),
+        process::id().to_string(),
+    )
+    .context("Could not write pid file")?;
     let announced_node_name = config.node.announced_node_name();
     // Initialize our bitcoind client.
     let bitcoind_client = bitcoind::init_bitcoind_client(config.bitcoind_config).await?;
@@ -65,7 +72,9 @@ pub async fn run_node(config: Config) -> anyhow::Result<Handles> {
         let chain_listener = (chain_monitor_listener, channel_manager_listener);
         let mut spv_client = SpvClient::new(chain_tip, chain_poller, &mut cache, &chain_listener);
         loop {
-            spv_client.poll_best_tip().await.unwrap();
+            if let Err(e) = spv_client.poll_best_tip().await {
+                eprintln!("Error polling best tip: {:?}", e);
+            }
             tokio::time::sleep(Duration::from_secs(1)).await;
         }
     });

@@ -4,6 +4,9 @@ build:
 test:
 	RUST_BACKTRACE=full cargo watch -s 'cargo test -- --nocapture'
 
+run-server: build
+	RUST_BACKTRACE=full cargo run server
+
 integration: build
 	RUST_BACKTRACE=1 bats -t -r test/integration
 

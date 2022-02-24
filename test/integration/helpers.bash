@@ -6,6 +6,8 @@ FAUCET_PRIVATE_KEY="92Qba5hnyWSn5Ffcka56yMQauaWY6ZLd91Vzxbi4a9CCetaHtYj"
 FAUCET="mgWUuj1J1N882jmqFxtDepEC73Rr22E9GU"
 
 start_network() {
+  stop_lnctl
+  rm -rf .lnctl
   docker compose up -d bitcoind
   genblocks 250
   docker compose up integration-deps
@@ -32,11 +34,11 @@ test_tmp_dir() {
 }
 
 start_lnctl() {
-  background "${lnctl}" server > $(test_tmp_dir)/lnctl_pid
+  background "${lnctl}" server
 }
 
 stop_lnctl() {
-  kill $(cat $(test_tmp_dir)/lnctl_pid) > /dev/null
+  kill $(cat .lnctl/pid) > /dev/null || true
 }
 
 lnd_cmd() {
