@@ -7,6 +7,11 @@ services:
         condition: service_healthy
       lnd2:
         condition: service_healthy
+  additional-deps:
+    image: busybox
+    depends_on:
+      lnd3:
+        condition: service_healthy
   bitcoind:
     image: lncm/bitcoind:v22.0
     ports:
@@ -29,8 +34,18 @@ services:
       retries: 5
   lnd2:
     image: lightninglabs/lnd:v0.14.2-beta
-    # ports:
-    #   - "10010:10009"
+    volumes:
+    - ${PWD}/dev/lnd/lnd.conf:/root/.lnd/lnd.conf
+    - ${PWD}/dev/lnd/tls.key:/root/.lnd/tls.key
+    - ${PWD}/dev/lnd/tls.cert:/root/.lnd/tls.cert
+    depends_on: [bitcoind]
+    healthcheck:
+      test: ["CMD-SHELL", "lncli -n regtest getinfo"]
+      interval: 2s
+      timeout: 2s
+      retries: 5
+  lnd3:
+    image: lightninglabs/lnd:v0.14.2-beta
     volumes:
     - ${PWD}/dev/lnd/lnd.conf:/root/.lnd/lnd.conf
     - ${PWD}/dev/lnd/tls.key:/root/.lnd/tls.key
