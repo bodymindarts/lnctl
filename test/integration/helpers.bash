@@ -13,6 +13,7 @@ start_network() {
   bitcoin_cmd importprivkey $FAUCET_PRIVATE_KEY
   genblocks 250
   docker compose up integration-deps
+  sleep 2
   lnd1_pubkey=$(lnd_cmd lnd1 getinfo | jq -r '.identity_pubkey')
   lnd2_pubkey=$(lnd_cmd lnd2 getinfo | jq -r '.identity_pubkey')
 
@@ -49,23 +50,23 @@ lnd_cmd() {
   docker compose exec -T ${container} lncli -n regtest ${@}
 }
 
+bitcoin_cmd() {
+  docker compose exec -T bitcoind bitcoin-cli -regtest ${@}
+}
+
 open_channel() {
   origin=${1}
   dest=${2}
   dest_pubkey=$(lnd_cmd ${dest} getinfo | jq -r '.identity_pubkey')
-  addr=$(lnd_cmd ${lnd} newaddress p2wkh | jq -r '.address')
-  bitcoind_cmd sendtoaddress "${addr}" 50
+  addr=$(lnd_cmd ${origin} newaddress p2wkh | jq -r '.address')
+  bitcoin_cmd sendtoaddress "${addr}" 50
   genblocks 10
-  lnd_cmd "${origin}" openchannel "${dest_pubkey}" 10 0
+  lnd_cmd "${origin}" openchannel "${dest_pubkey}" 100000000 0
   genblocks 10
 }
 
 genblocks() {
   bitcoin_cmd generatetoaddress ${1} ${FAUCET}
-}
-
-bitcoin_cmd() {
-  docker compose exec -T bitcoind bitcoin-cli -regtest ${@}
 }
 
 # Run the given command in the background. Useful for starting a

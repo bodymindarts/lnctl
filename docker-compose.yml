@@ -20,8 +20,6 @@ services:
     - ${PWD}/dev/bitcoind/bitcoin.conf:/data/.bitcoin/bitcoin.conf
   lnd1:
     image: lightninglabs/lnd:v0.14.2-beta
-    # ports:
-    #   - "10009:10009"
     volumes:
     - ${PWD}/dev/lnd/lnd.conf:/root/.lnd/lnd.conf
     - ${PWD}/dev/lnd/tls.key:/root/.lnd/tls.key
