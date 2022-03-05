@@ -9,7 +9,9 @@ use lightning::{
         keysinterface::{InMemorySigner, KeysInterface, KeysManager},
         Filter,
     },
+    // ln::channelmanager::SimpleArcChannelManager,
     ln::peer_handler::{IgnoringMessageHandler, MessageHandler, SimpleArcPeerManager},
+    // routing::network_graph::{NetGraphMsgHandler, NetworkGraph},
 };
 use lightning_net_tokio::SocketDescriptor;
 use lightning_persister::FilesystemPersister;
@@ -24,7 +26,23 @@ pub type ChainMonitor = chainmonitor::ChainMonitor<
     Arc<LnCtlLogger>,
     Arc<FilesystemPersister>,
 >;
-
+// pub(crate) type LnCtlPeers = PeerManager<
+//     SocketDescriptor,
+//     Arc<SimpleArcChannelManager<ChainMonitor, BitcoindClient, BitcoindClient, LnCtlLogger>>,
+//     Arc<
+//         MessageLogger<
+//             Arc<
+//                 NetGraphMsgHandler<
+//                     Arc<NetworkGraph>,
+//                     Arc<dyn chain::Access + Send + Sync>,
+//                     Arc<LnCtlLogger>,
+//                 >,
+//             >,
+//         >,
+//     >,
+//     Arc<LnCtlLogger>,
+//     Arc<IgnoringMessageHandler>,
+// >;
 pub(crate) type LnCtlPeers = SimpleArcPeerManager<
     SocketDescriptor,
     ChainMonitor,

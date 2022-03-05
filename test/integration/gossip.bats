@@ -10,7 +10,7 @@ setup() {
 
 teardown() {
   stop_lnctl
-  teardown_network
+  # teardown_network
 }
 
 @test "Node can be added to the network" {

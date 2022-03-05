@@ -57,11 +57,15 @@ bitcoin_cmd() {
 open_channel() {
   origin=${1}
   dest=${2}
-  dest_pubkey=$(lnd_cmd ${dest} getinfo | jq -r '.identity_pubkey')
+  if [[ "${dest}" == "lnctl" ]]; then
+    dest_pubkey=$(lnctl node-status | jq -r '.id')
+  else
+    dest_pubkey=$(lnd_cmd ${dest} getinfo | jq -r '.identity_pubkey')
+  fi
   addr=$(lnd_cmd ${origin} newaddress p2wkh | jq -r '.address')
   bitcoin_cmd sendtoaddress "${addr}" 50
   genblocks 10
-  lnd_cmd "${origin}" openchannel "${dest_pubkey}" 100000000 0
+  lnd_cmd "${origin}" openchannel "${dest_pubkey}" 5000000 0
   genblocks 10
 }
 
