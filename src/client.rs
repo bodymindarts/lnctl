@@ -29,3 +29,18 @@ pub async fn get_node_status(config: Config) -> anyhow::Result<()> {
 
     Ok(())
 }
+
+pub async fn get_network_graph(config: Config) -> anyhow::Result<()> {
+    let mut client = LnCtlClient::connect(format!("http://localhost:{}", config.grpc_port)).await?;
+
+    let request = tonic::Request::new(GetNetworkGraphRequest {});
+
+    let response = client.get_network_graph(request).await?;
+
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&response.into_inner()).unwrap()
+    );
+
+    Ok(())
+}

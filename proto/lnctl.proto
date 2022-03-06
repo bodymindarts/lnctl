@@ -4,7 +4,8 @@ package lnctl;
 
 service Lnctl {
   rpc GetNodeStatus(GetNodeStatusRequest) returns (GetNodeStatusResponse) {}
-  rpc ListPeers (ListPeersRequest) returns (ListPeersResponse) {}
+  rpc ListPeers(ListPeersRequest) returns (ListPeersResponse) {}
+  rpc GetNetworkGraph(GetNetworkGraphRequest) returns (GetNetworkGraphResponse) {}
 }
 
 message GetNodeStatusRequest {}
@@ -14,9 +15,22 @@ message GetNodeStatusResponse {
 
 message ListPeersRequest {}
 message ListPeersResponse {
-    repeated Peer peers = 1;
+  repeated Peer peers = 1;
 }
 
 message Peer {
   string pubkey = 1;
+}
+
+message GetNetworkGraphRequest {}
+message GetNetworkGraphResponse {
+  repeated Channel channels = 1;
+  repeated Node nodes = 2;
+}
+message Channel {
+  string node_one = 1;
+  string node_two = 2;
+}
+message Node {
+  string node_id = 1;
 }

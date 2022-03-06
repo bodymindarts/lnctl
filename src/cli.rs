@@ -18,6 +18,7 @@ enum Commands {
     Server {},
     ListPeers {},
     NodeStatus {},
+    Graph {},
 }
 
 const DEFAULT_CONFIG: &str = "lnctl.yml";
@@ -37,6 +38,9 @@ pub async fn run() -> anyhow::Result<()> {
         Commands::NodeStatus {} => {
             client::get_node_status(config).await?;
         }
+        Commands::Graph {} => {
+            client::get_network_graph(config).await?;
+        }
     }
 
     Ok(())
@@ -46,7 +50,13 @@ async fn run_server(config: Config) -> anyhow::Result<()> {
     let grpc_port = config.grpc_port;
     let handles = node::run_node(config).await?;
 
-    grpc::start_server(grpc_port, handles.peer_manager, handles.channel_manager).await?;
+    grpc::start_server(
+        grpc_port,
+        handles.peer_manager,
+        handles.channel_manager,
+        handles.network_graph,
+    )
+    .await?;
 
     handles.background_processor.stop()?;
     Ok(())

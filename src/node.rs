@@ -1,6 +1,6 @@
 use crate::{
     background, bitcoind, chain_monitor, channel_manager, config::Config, invoice_payer, keys,
-    ldk_events, logger, peers, persistence, scorer, uncertainty_graph,
+    ldk_events, logger, peers, persistence, scorer, uncertainty_graph, uncertainty_graph::LnGraph,
 };
 use anyhow::Context;
 use lightning_background_processor::BackgroundProcessor;
@@ -11,6 +11,7 @@ pub struct Handles {
     pub background_processor: BackgroundProcessor,
     pub peer_manager: Arc<peers::LnCtlPeers>,
     pub channel_manager: Arc<channel_manager::LnCtlChannelManager>,
+    pub network_graph: Arc<LnGraph>,
 }
 
 pub async fn run_node(config: Config) -> anyhow::Result<Handles> {
@@ -164,8 +165,9 @@ pub async fn run_node(config: Config) -> anyhow::Result<Handles> {
     }
 
     Ok(Handles {
-        background_processor: background_processor,
-        peer_manager: peer_manager,
-        channel_manager: channel_manager,
+        background_processor,
+        peer_manager,
+        channel_manager,
+        network_graph,
     })
 }
