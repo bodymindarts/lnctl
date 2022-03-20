@@ -1,4 +1,4 @@
-use crate::node::hex_utils;
+use crate::{lnd::LndConfig, node::hex_utils};
 use anyhow::*;
 use bitcoin::secp256k1::PublicKey;
 use lightning::ln::msgs::NetAddress;
@@ -53,6 +53,11 @@ impl NodeConfig {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Connector {
+    r#type: String,
+    lnd: Option<LndConfig>,
+}
+#[derive(Debug, Deserialize)]
 pub struct Config {
     #[serde(rename = "bitcoind")]
     pub bitcoind_config: BitcoindConfig,
@@ -64,6 +69,7 @@ pub struct Config {
     pub bootstrap_peers: Option<Vec<String>>,
     #[serde(skip_deserializing)]
     pub peers: Vec<(PublicKey, SocketAddr)>,
+    pub connectors: Vec<Connector>,
 }
 
 fn default_data_dir() -> PathBuf {
