@@ -1,6 +1,6 @@
 use super::{
     chain_monitor::ChainMonitor, channel_manager::LnCtlChannelManager, invoice_payer::InvoicePayer,
-    logger::LnCtlLogger, peers::LnCtlPeers, uncertainty_graph::ArcNetGraphMsgHandler,
+    logger::LnCtlLogger, network_graph::ArcNetGraphMsgHandler, peers::LnCtlPeers,
 };
 use lightning::util::events::EventHandler;
 use lightning_background_processor::BackgroundProcessor;

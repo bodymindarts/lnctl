@@ -1,6 +1,6 @@
 use super::{
     bitcoind::BitcoindClient, channel_manager::LnCtlChannelManager, logger::LnCtlLogger,
-    uncertainty_graph::ArcNetGraphMsgHandler,
+    network_graph::ArcNetGraphMsgHandler,
 };
 use bitcoin::secp256k1::PublicKey;
 use lightning::{

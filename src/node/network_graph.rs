@@ -10,7 +10,7 @@ pub(crate) type LnGraph = NetworkGraph;
 pub(crate) type ArcNetGraphMsgHandler =
     Arc<NetGraphMsgHandler<Arc<LnGraph>, Arc<dyn chain::Access + Send + Sync>, Arc<LnCtlLogger>>>;
 
-pub fn init_uncertainty_graph(
+pub fn init_network_graph(
     network: bitcoin::Network,
     data_dir: &Path,
     logger: Arc<LnCtlLogger>,

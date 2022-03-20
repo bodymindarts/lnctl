@@ -1,6 +1,6 @@
 use crate::node::{
-    channel_manager::LnCtlChannelManager, hex_utils::hex_str, peers::LnCtlPeers,
-    uncertainty_graph::LnGraph,
+    channel_manager::LnCtlChannelManager, hex_utils::hex_str, network_graph::LnGraph,
+    peers::LnCtlPeers,
 };
 use lightning::{
     chain::{

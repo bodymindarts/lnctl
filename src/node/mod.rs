@@ -10,15 +10,15 @@ mod scorer;
 pub mod channel_manager;
 pub mod hex_utils;
 pub mod logger;
+pub mod network_graph;
 pub mod peers;
-pub mod uncertainty_graph;
 
 use crate::config::Config;
 use anyhow::Context;
 use lightning_background_processor::BackgroundProcessor;
 use lightning_block_sync::{poll, SpvClient, UnboundedCache};
+use network_graph::LnGraph;
 use std::{fs, ops::Deref, process, sync::Arc, time::Duration};
-use uncertainty_graph::LnGraph;
 
 pub struct Handles {
     pub background_processor: BackgroundProcessor,
@@ -62,7 +62,7 @@ pub async fn run_node(config: Config) -> anyhow::Result<Handles> {
     )
     .await?;
 
-    let (network_gossip, network_graph) = uncertainty_graph::init_uncertainty_graph(
+    let (network_gossip, network_graph) = network_graph::init_network_graph(
         bitcoind_client.network,
         &config.data_dir,
         Arc::clone(&logger),
