@@ -54,13 +54,21 @@ impl Lnctl for LnCtlGrpc {
         let graph = self.graph_pool.read_graph().await;
         let channels = graph
             .channels()
-            .values()
+            .iter()
             .map(
-                |UncertaintyChannel {
-                     node_one, node_two, ..
-                 }| Channel {
-                    node_one: hex_str(node_one.as_slice()),
-                    node_two: hex_str(node_two.as_slice()),
+                |(
+                    short_channel_id,
+                    UncertaintyChannel {
+                        node_a,
+                        node_b,
+                        total_capacity,
+                        ..
+                    },
+                )| Channel {
+                    short_channel_id: *short_channel_id,
+                    node_a: hex_str(node_a.as_slice()),
+                    node_b: hex_str(node_b.as_slice()),
+                    total_capacity: total_capacity.as_ref().map(u64::from),
                 },
             )
             .collect();

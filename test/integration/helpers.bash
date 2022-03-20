@@ -6,16 +6,12 @@ start_network() {
   stop_lnctl
   rm -rf .lnctl
   docker compose up -d bitcoind
+
   bitcoin_cmd createwallet default
   genblocks 250
   docker compose up integration-deps
-  sleep 2
   lnd1_pubkey=$(lnd_cmd lnd1 getinfo | jq -r '.identity_pubkey')
   lnd2_pubkey=$(lnd_cmd lnd2 getinfo | jq -r '.identity_pubkey')
-
-  cache_value "lnd1_pubkey" "$lnd1_pubkey"
-  cache_value "lnd2_pubkey" "$lnd2_pubkey"
-
   lnd_cmd lnd1 connect "${lnd2_pubkey}@lnd2:9735"
 }
 

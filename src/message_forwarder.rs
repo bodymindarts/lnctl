@@ -36,11 +36,38 @@ impl RoutingMessageHandler for MessageForwarder {
         &self,
         msg: &ChannelAnnouncement,
     ) -> Result<bool, LightningError> {
-        return self.inner.handle_channel_announcement(msg);
+        let res = self.inner.handle_channel_announcement(msg)?;
+        let channel_id = msg.contents.short_channel_id;
+        if let Some(channel) = self
+            .inner
+            .network_graph()
+            .read_only()
+            .channels()
+            .get(&channel_id)
+        {
+            self.forwarder.update_channel(channel_id, channel);
+        } else {
+            self.forwarder.remove_channel(channel_id);
+        }
+        Ok(res)
     }
     fn handle_channel_update(&self, msg: &ChannelUpdate) -> Result<bool, LightningError> {
-        return self.inner.handle_channel_update(msg);
+        let res = self.inner.handle_channel_update(msg)?;
+        let channel_id = msg.contents.short_channel_id;
+        if let Some(channel) = self
+            .inner
+            .network_graph()
+            .read_only()
+            .channels()
+            .get(&channel_id)
+        {
+            self.forwarder.update_channel(channel_id, channel);
+        } else {
+            self.forwarder.remove_channel(channel_id);
+        }
+        Ok(res)
     }
+
     fn get_next_channel_announcements(
         &self,
         starting_point: u64,

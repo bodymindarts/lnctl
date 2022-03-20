@@ -28,8 +28,10 @@ message GetNetworkGraphResponse {
   repeated Node nodes = 2;
 }
 message Channel {
-  string node_one = 1;
-  string node_two = 2;
+  uint64 short_channel_id = 1;
+  string node_a = 2;
+  string node_b = 3;
+  optional uint64 total_capacity = 4;
 }
 message Node {
   string node_id = 1;

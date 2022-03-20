@@ -29,10 +29,36 @@ impl UncertaintyGraph {
         &self.channels
     }
 
+    fn add_node(&mut self, node_id: NodeId) {
+        self.nodes.entry(node_id).or_insert(UncertaintyNode {});
+    }
+
     fn handle_update(&mut self, update: GraphUpdate) {
         match update {
-            GraphUpdate::UpdateNode { node_id } => {
-                let _ = self.nodes.insert(node_id, UncertaintyNode {});
+            GraphUpdate::UpdateNode { node_id } => self.add_node(node_id),
+            GraphUpdate::RemoveChannel { channel_id } => {
+                let _ = self.channels.remove(&channel_id);
+            }
+            GraphUpdate::UpdateChannel {
+                channel_id,
+                total_capacity,
+                node_a,
+                node_b,
+                a_to_b_info,
+                b_to_a_info,
+            } => {
+                self.add_node(node_a);
+                self.add_node(node_b);
+                let _ = self.channels.insert(
+                    channel_id,
+                    UncertaintyChannel {
+                        total_capacity,
+                        node_a,
+                        node_b,
+                        a_to_b_info,
+                        b_to_a_info,
+                    },
+                );
             }
         }
     }
