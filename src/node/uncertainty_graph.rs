@@ -1,4 +1,4 @@
-use crate::{logger::LnCtlLogger, persistence};
+use super::{logger::LnCtlLogger, persistence};
 use bitcoin::blockdata::constants::genesis_block;
 use lightning::{
     chain, routing::network_graph::NetGraphMsgHandler, routing::network_graph::NetworkGraph,

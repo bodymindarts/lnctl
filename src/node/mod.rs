@@ -1,11 +1,24 @@
-use crate::{
-    background, bitcoind, chain_monitor, channel_manager, config::Config, invoice_payer, keys,
-    ldk_events, logger, peers, persistence, scorer, uncertainty_graph, uncertainty_graph::LnGraph,
-};
+mod background;
+mod bitcoind;
+mod chain_monitor;
+mod invoice_payer;
+mod keys;
+mod ldk_events;
+mod persistence;
+mod scorer;
+
+pub mod channel_manager;
+pub mod hex_utils;
+pub mod logger;
+pub mod peers;
+pub mod uncertainty_graph;
+
+use crate::config::Config;
 use anyhow::Context;
 use lightning_background_processor::BackgroundProcessor;
 use lightning_block_sync::{poll, SpvClient, UnboundedCache};
 use std::{fs, ops::Deref, process, sync::Arc, time::Duration};
+use uncertainty_graph::LnGraph;
 
 pub struct Handles {
     pub background_processor: BackgroundProcessor,

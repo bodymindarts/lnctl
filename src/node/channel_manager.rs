@@ -1,4 +1,4 @@
-use crate::{bitcoind::BitcoindClient, chain_monitor::ChainMonitor, logger::LnCtlLogger};
+use super::{bitcoind::BitcoindClient, chain_monitor::ChainMonitor, logger::LnCtlLogger};
 use bitcoin::hash_types::BlockHash;
 use lightning::{
     chain::{

@@ -1,4 +1,4 @@
-use crate::{channel_manager::LnCtlChannelManager, logger::LnCtlLogger};
+use super::{channel_manager::LnCtlChannelManager, logger::LnCtlLogger};
 use lightning::{
     routing::{network_graph::NetworkGraph, scoring::Scorer},
     util::events::EventHandler,
@@ -6,8 +6,13 @@ use lightning::{
 use lightning_invoice::{payment, utils::DefaultRouter};
 use std::sync::{Arc, Mutex};
 
-pub(crate) type InvoicePayer<E> =
-    payment::InvoicePayer<Arc<LnCtlChannelManager>, Router, Arc<Mutex<Scorer>>, Arc<LnCtlLogger>, E>;
+pub(crate) type InvoicePayer<E> = payment::InvoicePayer<
+    Arc<LnCtlChannelManager>,
+    Router,
+    Arc<Mutex<Scorer>>,
+    Arc<LnCtlLogger>,
+    E,
+>;
 type Router = DefaultRouter<Arc<NetworkGraph>, Arc<LnCtlLogger>>;
 
 pub(crate) fn init_invoice_payer<E: EventHandler>(

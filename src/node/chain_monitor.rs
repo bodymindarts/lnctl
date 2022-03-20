@@ -1,4 +1,4 @@
-use crate::{bitcoind::BitcoindClient, logger::LnCtlLogger};
+use super::{bitcoind::BitcoindClient, logger::LnCtlLogger};
 use lightning::chain::{chainmonitor, keysinterface::InMemorySigner, Filter};
 use lightning_persister::FilesystemPersister;
 use std::sync::Arc;

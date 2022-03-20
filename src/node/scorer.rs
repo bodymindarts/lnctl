@@ -1,4 +1,4 @@
-use crate::persistence;
+use super::persistence;
 use lightning::routing::scoring::Scorer;
 use std::{
     path::Path,

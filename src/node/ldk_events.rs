@@ -1,4 +1,4 @@
-use crate::{bitcoind::BitcoindClient, channel_manager::LnCtlChannelManager, hex_utils};
+use super::{bitcoind::BitcoindClient, channel_manager::LnCtlChannelManager, hex_utils};
 use bitcoin::{consensus::encode, secp256k1::Secp256k1, Network, Transaction};
 use bitcoin_bech32::WitnessProgram;
 use lightning::{

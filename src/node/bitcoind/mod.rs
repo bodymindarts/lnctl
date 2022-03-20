@@ -1,7 +1,7 @@
 mod client;
 mod convert;
 
-use super::config::BitcoindConfig;
+use crate::config::BitcoindConfig;
 use anyhow::*;
 pub use client::*;
 use std::{fs, sync::Arc};

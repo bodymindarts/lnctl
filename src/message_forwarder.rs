@@ -1,4 +1,4 @@
-use crate::logger::LnCtlLogger;
+use crate::node::logger::LnCtlLogger;
 use bitcoin::secp256k1::key::PublicKey;
 use lightning::{
     chain,

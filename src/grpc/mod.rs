@@ -1,4 +1,4 @@
-use crate::{
+use crate::node::{
     channel_manager::LnCtlChannelManager, hex_utils::hex_str, peers::LnCtlPeers,
     uncertainty_graph::LnGraph,
 };
