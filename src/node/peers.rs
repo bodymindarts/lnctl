@@ -92,3 +92,20 @@ pub(crate) async fn do_connect_peer(
         None => Err(()),
     }
 }
+
+pub(crate) async fn connect_peer_if_necessary(
+    pubkey: PublicKey,
+    peer_addr: SocketAddr,
+    peer_manager: Arc<LnCtlPeers>,
+) -> Result<(), ()> {
+    for node_pubkey in peer_manager.get_peer_node_ids() {
+        if node_pubkey == pubkey {
+            return Ok(());
+        }
+    }
+    let res = do_connect_peer(pubkey, peer_addr, peer_manager).await;
+    if res.is_err() {
+        println!("ERROR: failed to connect to peer");
+    }
+    res
+}

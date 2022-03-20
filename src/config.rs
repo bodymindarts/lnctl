@@ -1,9 +1,11 @@
+use crate::node::hex_utils;
 use anyhow::*;
+use bitcoin::secp256k1::PublicKey;
 use lightning::ln::msgs::NetAddress;
 use serde::Deserialize;
 use std::{
     env,
-    net::{IpAddr, SocketAddr},
+    net::{IpAddr, SocketAddr, ToSocketAddrs},
     path::PathBuf,
 };
 
@@ -59,6 +61,9 @@ pub struct Config {
     pub node: NodeConfig,
     #[serde(default = "default_grpc_port")]
     pub grpc_port: u16,
+    pub bootstrap_peers: Option<Vec<String>>,
+    #[serde(skip_deserializing)]
+    pub peers: Vec<(PublicKey, SocketAddr)>,
 }
 
 fn default_data_dir() -> PathBuf {
@@ -79,7 +84,40 @@ impl Config {
         let mut config: Config =
             serde_yaml::from_str(&config_file).context("Couldn't parse config file")?;
         config.node.init_net_address();
+        if let Some(peers) = config.bootstrap_peers.take() {
+            for peer in peers {
+                config.peers.push(Self::parse_peer_info(peer)?);
+            }
+        }
         Ok(config)
+    }
+
+    fn parse_peer_info(peer_pubkey_and_ip_addr: String) -> anyhow::Result<(PublicKey, SocketAddr)> {
+        let mut pubkey_and_addr = peer_pubkey_and_ip_addr.split("@");
+        let pubkey = pubkey_and_addr.next();
+        let peer_addr_str = pubkey_and_addr.next();
+        if peer_addr_str.is_none() || peer_addr_str.is_none() {
+            return Err(anyhow!(
+                    "ERROR: incorrectly formatted peer info. Should be formatted as: `pubkey@host:port`",
+            ));
+        }
+
+        let peer_addr = peer_addr_str
+            .unwrap()
+            .to_socket_addrs()
+            .map(|mut r| r.next());
+        if peer_addr.is_err() || peer_addr.as_ref().unwrap().is_none() {
+            return Err(anyhow!(
+                "ERROR: couldn't parse pubkey@host:port into a socket address",
+            ));
+        }
+
+        let pubkey = hex_utils::to_compressed_pubkey(pubkey.unwrap());
+        if pubkey.is_none() {
+            return Err(anyhow!("ERROR: unable to parse given pubkey for node",));
+        }
+
+        Ok((pubkey.unwrap(), peer_addr.unwrap().unwrap()))
     }
 }
 

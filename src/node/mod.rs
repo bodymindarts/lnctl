@@ -188,6 +188,10 @@ pub async fn run_node(
         });
     }
 
+    for (pubkey, addr) in config.peers {
+        let _ = peers::connect_peer_if_necessary(pubkey, addr, Arc::clone(&peer_manager));
+    }
+
     Ok(Handles {
         background_processor,
         peer_manager,
