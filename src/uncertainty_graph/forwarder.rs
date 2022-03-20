@@ -18,7 +18,9 @@ impl UncertaintyGraphMsgForwarder {
     fn send_msg(&self, msg: GraphUpdate) {
         let sender = self.channel.clone();
         tokio::spawn(async move {
-            let _ = sender.send(msg).await;
+            if let Err(e) = sender.send(msg).await {
+                eprintln!("Warning: couldn't forward mesage: {:?}", e);
+            }
         });
     }
 }

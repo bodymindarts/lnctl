@@ -48,14 +48,14 @@ pub async fn run() -> anyhow::Result<()> {
 
 async fn run_server(config: Config) -> anyhow::Result<()> {
     let grpc_port = config.grpc_port;
-    let forwarder = uncertainty_graph::init_uncertainty_graph();
+    let (graph_pool, forwarder) = uncertainty_graph::init_uncertainty_graph();
     let handles = node::run_node(config, forwarder).await?;
 
     grpc::start_server(
         grpc_port,
         handles.peer_manager,
         handles.channel_manager,
-        handles.network_graph,
+        graph_pool,
     )
     .await?;
 
