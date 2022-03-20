@@ -1,4 +1,4 @@
-use crate::{client, config::Config, grpc, node, uncertainty_graph};
+use crate::{client, config::Config, grpc, lnd, node, uncertainty_graph};
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
@@ -46,10 +46,20 @@ pub async fn run() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn run_server(config: Config) -> anyhow::Result<()> {
+async fn run_server(mut config: Config) -> anyhow::Result<()> {
     let grpc_port = config.grpc_port;
     let (graph_pool, forwarder) = uncertainty_graph::init_uncertainty_graph();
-    let handles = node::run_node(config, forwarder).await?;
+    let handles = node::run_node(config.clone(), forwarder.clone()).await?;
+
+    for connector in config.connectors.drain(0..) {
+        if let Some(lnd) = connector.lnd {
+            if connector.r#type == "lnd" {
+                if let Err(e) = lnd::start_lnd_connector(lnd, forwarder.clone()).await {
+                    eprintln!("Could not start lnd connector: {:?}", e);
+                }
+            }
+        }
+    }
 
     grpc::start_server(
         grpc_port,

@@ -9,7 +9,7 @@ use std::{
     path::PathBuf,
 };
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct NodeConfig {
     #[serde(default = "default_listen_port")]
     pub listen_port: u16,
@@ -52,12 +52,12 @@ impl NodeConfig {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Connector {
-    r#type: String,
-    lnd: Option<LndConfig>,
+    pub r#type: String,
+    pub lnd: Option<LndConfig>,
 }
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     #[serde(rename = "bitcoind")]
     pub bitcoind_config: BitcoindConfig,
@@ -127,7 +127,7 @@ impl Config {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct BitcoindConfig {
     pub rpc_user: String,
     pub rpc_password_file: PathBuf,

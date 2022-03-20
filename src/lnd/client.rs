@@ -9,7 +9,7 @@ pub mod proto {
 
 pub type Lnd = proto::lightning_client::LightningClient<Channel>;
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize)]
 pub struct LndConfig {
     admin_endpoint: String,
     macaroon_path: PathBuf,
