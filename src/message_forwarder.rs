@@ -3,8 +3,7 @@ use bitcoin::secp256k1::key::PublicKey;
 use lightning::{
     chain,
     ln::msgs::*,
-    routing::network_graph::NetGraphMsgHandler,
-    routing::network_graph::NetworkGraph,
+    routing::network_graph::{NetGraphMsgHandler, NetworkGraph, NodeId},
     util::events::{MessageSendEvent, MessageSendEventsProvider},
 };
 use std::sync::Arc;
@@ -26,7 +25,12 @@ impl MessageForwarder {
 
 impl RoutingMessageHandler for MessageForwarder {
     fn handle_node_announcement(&self, msg: &NodeAnnouncement) -> Result<bool, LightningError> {
-        self.inner.handle_node_announcement(msg)
+        let res = self.inner.handle_node_announcement(msg)?;
+        let node_id = NodeId::from_pubkey(&msg.contents.node_id);
+        if let Some(node) = self.inner.network_graph().read_only().nodes().get(&node_id) {
+            self.forwarder.update_node(node_id, node);
+        }
+        Ok(res)
     }
     fn handle_channel_announcement(
         &self,
