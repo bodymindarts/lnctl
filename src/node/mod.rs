@@ -18,6 +18,7 @@ use crate::{
     uncertainty_graph::UncertaintyGraphMsgForwarder,
 };
 use anyhow::Context;
+pub use bitcoind::BitcoindClient;
 use lightning_background_processor::BackgroundProcessor;
 use lightning_block_sync::{poll, SpvClient, UnboundedCache};
 use network_graph::LnGraph;
@@ -71,6 +72,7 @@ pub async fn run_node(
     let (network_gossip, network_graph) = network_graph::init_network_graph(
         bitcoind_client.network,
         &config.data_dir,
+        Arc::clone(&bitcoind_client),
         Arc::clone(&logger),
     )?;
 

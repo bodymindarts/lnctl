@@ -1,16 +1,17 @@
-use crate::{node::logger::LnCtlLogger, uncertainty_graph::UncertaintyGraphMsgForwarder};
+use crate::{
+    node::{logger::LnCtlLogger, BitcoindClient},
+    uncertainty_graph::UncertaintyGraphMsgForwarder,
+};
 use bitcoin::secp256k1::key::PublicKey;
 use lightning::{
-    chain,
     ln::msgs::*,
     routing::network_graph::{NetGraphMsgHandler, NetworkGraph, NodeId},
     util::events::{MessageSendEvent, MessageSendEventsProvider},
 };
 use std::sync::Arc;
 
-pub(crate) type ArcNetGraphMsgHandler = Arc<
-    NetGraphMsgHandler<Arc<NetworkGraph>, Arc<dyn chain::Access + Send + Sync>, Arc<LnCtlLogger>>,
->;
+pub(crate) type ArcNetGraphMsgHandler =
+    Arc<NetGraphMsgHandler<Arc<NetworkGraph>, Arc<BitcoindClient>, Arc<LnCtlLogger>>>;
 
 pub struct MessageForwarder {
     inner: ArcNetGraphMsgHandler,

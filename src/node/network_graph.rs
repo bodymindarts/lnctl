@@ -1,18 +1,17 @@
-use super::{logger::LnCtlLogger, persistence};
+use super::{bitcoind::BitcoindClient, logger::LnCtlLogger, persistence};
 use bitcoin::blockdata::constants::genesis_block;
-use lightning::{
-    chain, routing::network_graph::NetGraphMsgHandler, routing::network_graph::NetworkGraph,
-};
+use lightning::{routing::network_graph::NetGraphMsgHandler, routing::network_graph::NetworkGraph};
 use std::time::Duration;
 use std::{path::Path, sync::Arc};
 
 pub(crate) type LnGraph = NetworkGraph;
 pub(crate) type ArcNetGraphMsgHandler =
-    Arc<NetGraphMsgHandler<Arc<LnGraph>, Arc<dyn chain::Access + Send + Sync>, Arc<LnCtlLogger>>>;
+    Arc<NetGraphMsgHandler<Arc<LnGraph>, Arc<BitcoindClient>, Arc<LnCtlLogger>>>;
 
 pub fn init_network_graph(
     network: bitcoin::Network,
     data_dir: &Path,
+    _bitcoind_client: Arc<BitcoindClient>,
     logger: Arc<LnCtlLogger>,
 ) -> anyhow::Result<(ArcNetGraphMsgHandler, Arc<LnGraph>)> {
     let genesis = genesis_block(network).header.block_hash();
@@ -23,7 +22,7 @@ pub fn init_network_graph(
     ));
     let network_gossip = Arc::new(NetGraphMsgHandler::new(
         Arc::clone(&network_graph),
-        None::<Arc<dyn chain::Access + Send + Sync>>,
+        None,
         logger,
     ));
     let network_graph_persist = Arc::clone(&network_graph);

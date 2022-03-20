@@ -2,6 +2,7 @@ use super::{channel::*, graph_update::*};
 use lightning::routing::network_graph::{ChannelInfo, DirectionalChannelInfo, NodeId, NodeInfo};
 use tokio::sync::mpsc::Sender;
 
+#[derive(Clone)]
 pub struct UncertaintyGraphMsgForwarder {
     channel: Sender<GraphUpdate>,
 }

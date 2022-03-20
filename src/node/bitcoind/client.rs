@@ -1,17 +1,23 @@
 use super::convert::{BlockchainInfo, FeeResponse, FundedTx, NewAddress, RawTx, SignedTx};
-use anyhow::Context;
-use bitcoin::blockdata::block::Block;
-use bitcoin::blockdata::transaction::Transaction;
-use bitcoin::consensus::encode;
-use bitcoin::hash_types::{BlockHash, Txid};
-use bitcoin::util::address::Address;
+use anyhow::{anyhow, Context};
+use bitcoin::{
+    blockdata::{block::Block, transaction::Transaction},
+    consensus::encode,
+    hash_types::{BlockHash, Txid},
+    hashes::hex::ToHex,
+    util::address::Address,
+    TxOut,
+};
 use lightning::chain::{
+    self,
     chaininterface::{BroadcasterInterface, ConfirmationTarget, FeeEstimator},
     BestBlock,
 };
-use lightning_block_sync::http::HttpEndpoint;
-use lightning_block_sync::rpc::RpcClient;
-use lightning_block_sync::{AsyncBlockSourceResult, BlockHeaderData, BlockSource};
+use lightning_block_sync::{
+    http::{HttpEndpoint, JsonResponse},
+    rpc::RpcClient,
+    AsyncBlockSourceResult, BlockHeaderData, BlockSource,
+};
 use std::{
     collections::HashMap,
     str::FromStr,
@@ -32,6 +38,25 @@ pub struct BitcoindClient {
     rpc_password: String,
     fees: Arc<HashMap<Target, AtomicU32>>,
     handle: tokio::runtime::Handle,
+}
+struct BlockHashW(BlockHash);
+impl TryFrom<JsonResponse> for BlockHashW {
+    type Error = std::io::Error;
+
+    fn try_from(JsonResponse(value): JsonResponse) -> Result<BlockHashW, Self::Error> {
+        use serde_json::Value;
+        match value {
+            Value::String(hash) => Ok(Self(
+                BlockHash::from_str(&hash)
+                    .context("Couldn't deserialize block hash")
+                    .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?,
+            )),
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                anyhow!("json return value not a string"),
+            )),
+        }
+    }
 }
 
 #[derive(Clone, Eq, Hash, PartialEq)]
@@ -326,4 +351,57 @@ impl BroadcasterInterface for BitcoindClient {
             }
         });
     }
+}
+impl chain::Access for BitcoindClient {
+    fn get_utxo(
+        &self,
+        _genesis_hash: &BlockHash,
+        short_channel_id: u64,
+    ) -> Result<TxOut, chain::AccessError> {
+        let rpc_client = Arc::clone(&self.bitcoind_rpc_client);
+        self.handle
+            .block_on::<std::pin::Pin<
+                Box<dyn std::future::Future<Output = anyhow::Result<TxOut>> + Send + Sync>,
+            >>(Box::pin(async move {
+                let block_height = block_from_scid(short_channel_id);
+                let tx_index = tx_index_from_scid(short_channel_id);
+                let vout = vout_from_scid(short_channel_id);
+                let mut rpc = rpc_client.lock().await;
+                let BlockHashW(block_hash): BlockHashW = {
+                    let block_height = serde_json::json!(block_height);
+                    rpc.call_method("getblockheader", &[block_height]).await?
+                };
+                let mut block: Block = {
+                    let header_hash = serde_json::json!(block_hash.to_hex());
+                    let verbosity = serde_json::json!(0 as u16);
+                    rpc.call_method("getblock", &[header_hash, verbosity])
+                        .await?
+                };
+                let mut tx = block.txdata.remove(tx_index as usize);
+                let out = tx.output.remove(vout as usize);
+                Ok(TxOut {
+                    value: out.value,
+                    script_pubkey: out.script_pubkey,
+                })
+            }))
+            .map_err(|e| {
+                eprintln!("WARINING get_utxo error: {:?}", e);
+                chain::AccessError::UnknownTx
+            })
+    }
+}
+pub const MAX_SCID_BLOCK: u64 = 0x00ffffff;
+pub const MAX_SCID_TX_INDEX: u64 = 0x00ffffff;
+pub const MAX_SCID_VOUT_INDEX: u64 = 0xffff;
+
+pub fn block_from_scid(short_channel_id: u64) -> u32 {
+    return (short_channel_id >> 40) as u32;
+}
+
+pub fn tx_index_from_scid(short_channel_id: u64) -> u32 {
+    return ((short_channel_id >> 16) & MAX_SCID_TX_INDEX) as u32;
+}
+
+pub fn vout_from_scid(short_channel_id: u64) -> u16 {
+    return ((short_channel_id) & MAX_SCID_VOUT_INDEX) as u16;
 }
