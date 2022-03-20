@@ -1,61 +1,30 @@
 use super::{
-    bitcoind::BitcoindClient, channel_manager::LnCtlChannelManager, logger::LnCtlLogger,
-    network_graph::ArcNetGraphMsgHandler,
+    bitcoind::BitcoindClient, chain_monitor::ChainMonitor, channel_manager::LnCtlChannelManager,
+    logger::LnCtlLogger,
 };
+use crate::message_forwarder::MessageForwarder;
 use bitcoin::secp256k1::PublicKey;
 use lightning::{
-    chain::{
-        self, chainmonitor,
-        keysinterface::{InMemorySigner, KeysInterface, KeysManager},
-        Filter,
-    },
-    // ln::channelmanager::SimpleArcChannelManager,
-    ln::peer_handler::{IgnoringMessageHandler, MessageHandler, SimpleArcPeerManager},
-    // routing::network_graph::{NetGraphMsgHandler, NetworkGraph},
+    chain::keysinterface::{KeysInterface, KeysManager},
+    ln::channelmanager::SimpleArcChannelManager,
+    ln::peer_handler::{IgnoringMessageHandler, MessageHandler, PeerManager},
 };
 use lightning_net_tokio::SocketDescriptor;
-use lightning_persister::FilesystemPersister;
 use rand::{self, Rng};
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 
-pub type ChainMonitor = chainmonitor::ChainMonitor<
-    InMemorySigner,
-    Arc<dyn Filter + Send + Sync>,
-    Arc<BitcoindClient>,
-    Arc<BitcoindClient>,
-    Arc<LnCtlLogger>,
-    Arc<FilesystemPersister>,
->;
-// pub(crate) type LnCtlPeers = PeerManager<
-//     SocketDescriptor,
-//     Arc<SimpleArcChannelManager<ChainMonitor, BitcoindClient, BitcoindClient, LnCtlLogger>>,
-//     Arc<
-//         MessageLogger<
-//             Arc<
-//                 NetGraphMsgHandler<
-//                     Arc<NetworkGraph>,
-//                     Arc<dyn chain::Access + Send + Sync>,
-//                     Arc<LnCtlLogger>,
-//                 >,
-//             >,
-//         >,
-//     >,
-//     Arc<LnCtlLogger>,
-//     Arc<IgnoringMessageHandler>,
-// >;
-pub(crate) type LnCtlPeers = SimpleArcPeerManager<
+pub(crate) type LnCtlPeers = PeerManager<
     SocketDescriptor,
-    ChainMonitor,
-    BitcoindClient,
-    BitcoindClient,
-    dyn chain::Access + Send + Sync,
-    LnCtlLogger,
+    Arc<SimpleArcChannelManager<ChainMonitor, BitcoindClient, BitcoindClient, LnCtlLogger>>,
+    Arc<MessageForwarder>,
+    Arc<LnCtlLogger>,
+    Arc<IgnoringMessageHandler>,
 >;
 
 pub fn init_peer_manager(
     listening_port: u16,
     channel_manager: Arc<LnCtlChannelManager>,
-    network_gossip: ArcNetGraphMsgHandler,
+    network_gossip: Arc<MessageForwarder>,
     keys_manager: Arc<KeysManager>,
     logger: Arc<LnCtlLogger>,
 ) -> Arc<LnCtlPeers> {

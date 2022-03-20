@@ -13,7 +13,7 @@ pub mod logger;
 pub mod network_graph;
 pub mod peers;
 
-use crate::config::Config;
+use crate::{config::Config, message_forwarder::MessageForwarder};
 use anyhow::Context;
 use lightning_background_processor::BackgroundProcessor;
 use lightning_block_sync::{poll, SpvClient, UnboundedCache};
@@ -68,10 +68,12 @@ pub async fn run_node(config: Config) -> anyhow::Result<Handles> {
         Arc::clone(&logger),
     )?;
 
+    let message_forwarder = Arc::new(MessageForwarder::new(Arc::clone(&network_gossip)));
+
     let peer_manager = peers::init_peer_manager(
         config.node.listen_port,
         Arc::clone(&channel_manager),
-        Arc::clone(&network_gossip),
+        Arc::clone(&message_forwarder),
         Arc::clone(&keys_manager),
         Arc::clone(&logger),
     );
