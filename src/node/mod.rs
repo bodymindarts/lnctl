@@ -13,7 +13,10 @@ pub mod logger;
 pub mod network_graph;
 pub mod peers;
 
-use crate::{config::Config, message_forwarder::MessageForwarder};
+use crate::{
+    config::Config, message_forwarder::MessageForwarder,
+    uncertainty_graph::UncertaintyGraphMsgForwarder,
+};
 use anyhow::Context;
 use lightning_background_processor::BackgroundProcessor;
 use lightning_block_sync::{poll, SpvClient, UnboundedCache};
@@ -27,7 +30,10 @@ pub struct Handles {
     pub network_graph: Arc<LnGraph>,
 }
 
-pub async fn run_node(config: Config) -> anyhow::Result<Handles> {
+pub async fn run_node(
+    config: Config,
+    forwarder: UncertaintyGraphMsgForwarder,
+) -> anyhow::Result<Handles> {
     fs::create_dir_all(&config.data_dir).context("failed to create data dir")?;
     fs::write(
         format!("{}/pid", config.data_dir.display()),
@@ -68,7 +74,10 @@ pub async fn run_node(config: Config) -> anyhow::Result<Handles> {
         Arc::clone(&logger),
     )?;
 
-    let message_forwarder = Arc::new(MessageForwarder::new(Arc::clone(&network_gossip)));
+    let message_forwarder = Arc::new(MessageForwarder::new(
+        Arc::clone(&network_gossip),
+        forwarder,
+    ));
 
     let peer_manager = peers::init_peer_manager(
         config.node.listen_port,

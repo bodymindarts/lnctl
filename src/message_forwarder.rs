@@ -1,4 +1,4 @@
-use crate::node::logger::LnCtlLogger;
+use crate::{node::logger::LnCtlLogger, uncertainty_graph::UncertaintyGraphMsgForwarder};
 use bitcoin::secp256k1::key::PublicKey;
 use lightning::{
     chain,
@@ -14,12 +14,13 @@ pub(crate) type ArcNetGraphMsgHandler = Arc<
 >;
 
 pub struct MessageForwarder {
-    pub inner: ArcNetGraphMsgHandler,
+    inner: ArcNetGraphMsgHandler,
+    forwarder: UncertaintyGraphMsgForwarder,
 }
 
 impl MessageForwarder {
-    pub fn new(inner: ArcNetGraphMsgHandler) -> Self {
-        MessageForwarder { inner }
+    pub fn new(inner: ArcNetGraphMsgHandler, forwarder: UncertaintyGraphMsgForwarder) -> Self {
+        MessageForwarder { inner, forwarder }
     }
 }
 

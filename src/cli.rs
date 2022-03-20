@@ -1,4 +1,4 @@
-use crate::{client, config::Config, grpc, node};
+use crate::{client, config::Config, grpc, node, uncertainty_graph};
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
@@ -48,7 +48,8 @@ pub async fn run() -> anyhow::Result<()> {
 
 async fn run_server(config: Config) -> anyhow::Result<()> {
     let grpc_port = config.grpc_port;
-    let handles = node::run_node(config).await?;
+    let forwarder = uncertainty_graph::init_uncertainty_graph();
+    let handles = node::run_node(config, forwarder).await?;
 
     grpc::start_server(
         grpc_port,
