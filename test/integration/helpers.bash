@@ -40,6 +40,11 @@ stop_lnctl() {
   [ -f .lnctl/pid ] && kill $(cat .lnctl/pid) > /dev/null || true
 }
 
+restart_lnctl() {
+  stop_lnctl
+  start_lnctl
+}
+
 lnd_cmd() {
   container="${1}"
   shift
