@@ -3,13 +3,13 @@ use lightning::routing::network_graph::NodeId;
 
 #[derive(Debug, Clone)]
 pub enum GraphUpdate {
-    UpdateNode {
+    UpdateNodeFromGossip {
         node_id: NodeId,
     },
-    RemoveChannel {
+    RemoveChannelFromGossip {
         channel_id: ChannelId,
     },
-    UpdateChannel {
+    UpdateChannelFromGossip {
         channel_id: ChannelId,
         node_a: NodeId,
         node_b: NodeId,

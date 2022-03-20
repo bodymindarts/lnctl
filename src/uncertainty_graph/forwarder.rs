@@ -13,15 +13,15 @@ impl UncertaintyGraphMsgForwarder {
     }
 
     pub fn update_node(&self, node_id: NodeId, _: &NodeInfo) {
-        self.send_msg(GraphUpdate::UpdateNode { node_id });
+        self.send_msg(GraphUpdate::UpdateNodeFromGossip { node_id });
     }
 
     pub fn remove_channel(&self, channel_id: u64) {
-        self.send_msg(GraphUpdate::RemoveChannel { channel_id })
+        self.send_msg(GraphUpdate::RemoveChannelFromGossip { channel_id })
     }
 
     pub fn update_channel(&self, channel_id: u64, info: &ChannelInfo) {
-        self.send_msg(GraphUpdate::UpdateChannel {
+        self.send_msg(GraphUpdate::UpdateChannelFromGossip {
             channel_id,
             node_a: info.node_one,
             node_b: info.node_two,

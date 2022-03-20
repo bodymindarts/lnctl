@@ -35,11 +35,11 @@ impl UncertaintyGraph {
 
     fn handle_update(&mut self, update: GraphUpdate) {
         match update {
-            GraphUpdate::UpdateNode { node_id } => self.add_node(node_id),
-            GraphUpdate::RemoveChannel { channel_id } => {
+            GraphUpdate::UpdateNodeFromGossip { node_id } => self.add_node(node_id),
+            GraphUpdate::RemoveChannelFromGossip { channel_id } => {
                 let _ = self.channels.remove(&channel_id);
             }
-            GraphUpdate::UpdateChannel {
+            GraphUpdate::UpdateChannelFromGossip {
                 channel_id,
                 total_capacity,
                 node_a,
