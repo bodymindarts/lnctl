@@ -2,15 +2,11 @@
 
 lnctl=./target/debug/lnctl
 
-FAUCET_PRIVATE_KEY="92Qba5hnyWSn5Ffcka56yMQauaWY6ZLd91Vzxbi4a9CCetaHtYj"
-FAUCET="mgWUuj1J1N882jmqFxtDepEC73Rr22E9GU"
-
 start_network() {
   stop_lnctl
   rm -rf .lnctl
   docker compose up -d bitcoind
   bitcoin_cmd createwallet default
-  bitcoin_cmd importprivkey $FAUCET_PRIVATE_KEY
   genblocks 250
   docker compose up integration-deps
   sleep 2
@@ -70,7 +66,8 @@ open_channel() {
 }
 
 genblocks() {
-  bitcoin_cmd generatetoaddress ${1} ${FAUCET}
+  addr=$(bitcoin_cmd getnewaddress)
+  bitcoin_cmd generatetoaddress ${1} ${addr}
 }
 
 # Run the given command in the background. Useful for starting a

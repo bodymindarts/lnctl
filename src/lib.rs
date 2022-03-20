@@ -12,7 +12,7 @@ mod invoice_payer;
 mod keys;
 mod ldk_events;
 mod logger;
-mod messages;
+mod message_forwarder;
 mod node;
 mod peers;
 mod persistence;

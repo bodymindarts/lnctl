@@ -1,20 +1,34 @@
+use crate::logger::LnCtlLogger;
 use bitcoin::secp256k1::key::PublicKey;
 use lightning::{
+    chain,
     ln::msgs::*,
+    routing::network_graph::NetGraphMsgHandler,
+    routing::network_graph::NetworkGraph,
     util::events::{MessageSendEvent, MessageSendEventsProvider},
 };
-use std::ops::Deref;
+use std::sync::Arc;
 
-pub struct MessageLogger<I: Deref>
-where
-    I::Target: RoutingMessageHandler,
-{
-    pub inner: I,
+pub(crate) type ArcNetGraphMsgHandler = Arc<
+    NetGraphMsgHandler<Arc<NetworkGraph>, Arc<dyn chain::Access + Send + Sync>, Arc<LnCtlLogger>>,
+>;
+
+pub struct MessageForwarder {
+    pub inner: ArcNetGraphMsgHandler,
 }
-impl<I: Deref> RoutingMessageHandler for MessageLogger<I>
-where
-    I::Target: RoutingMessageHandler,
-{
+
+impl MessageForwarder {
+    pub fn new(
+        network_graph: Arc<NetworkGraph>,
+        chain_access: Option<Arc<dyn chain::Access + Send + Sync>>,
+        logger: Arc<LnCtlLogger>,
+    ) -> Self {
+        let inner = Arc::new(NetGraphMsgHandler::new(network_graph, chain_access, logger));
+        MessageForwarder { inner }
+    }
+}
+
+impl RoutingMessageHandler for MessageForwarder {
     fn handle_node_announcement(&self, msg: &NodeAnnouncement) -> Result<bool, LightningError> {
         println!("handle_node_announcement: {:?}", msg);
         self.inner.handle_node_announcement(msg)
@@ -107,12 +121,8 @@ where
             .handle_query_short_channel_ids(their_node_id, msg);
     }
 }
-impl<T: Deref> MessageSendEventsProvider for MessageLogger<T>
-where
-    T::Target: RoutingMessageHandler,
-{
+impl MessageSendEventsProvider for MessageForwarder {
     fn get_and_clear_pending_msg_events(&self) -> Vec<MessageSendEvent> {
-        println!("get_and_clear_pending_msg_events");
         return self.inner.get_and_clear_pending_msg_events();
     }
 }
