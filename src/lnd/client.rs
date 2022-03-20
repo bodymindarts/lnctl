@@ -15,15 +15,15 @@ pub struct LndConfig {
     macaroon_path: PathBuf,
 }
 
-pub struct LndClient {
+pub(super) struct LndClient {
     inner: Lnd,
     macaroon: MacaroonData,
 }
 
 impl LndClient {
     pub async fn new(config: LndConfig) -> anyhow::Result<LndClient> {
-        let inner = Lnd::connect(config.admin_endpoint).await?;
         let macaroon = MacaroonData::from_file_path(config.macaroon_path)?;
+        let inner = Lnd::connect(format!("https://{}", config.admin_endpoint)).await?;
         Ok(LndClient { inner, macaroon })
     }
 

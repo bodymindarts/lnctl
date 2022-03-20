@@ -6,3 +6,9 @@ bitcoind:
   rpc_host: 127.0.0.1
   rpc_port: 18443
   network: regtest
+connectors:
+- type: lnd
+  lnd:
+    admin_endpoint: localhost:10009
+    macaroon_path: "dev/lnd/lnd1.macaroon"
+    tls_cert_path: "dev/lnd/tls.cert"
