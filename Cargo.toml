@@ -27,7 +27,8 @@ lightning-invoice = { version = "0.12.0" }
 rand = "0.4"
 futures = "0.3"
 
-tonic = "0.6"
+rustls = "0.19"
+tonic = { version = "0.6", features = ["tls", "transport"] }
 prost = "0.9"
 tokio = { version = "1.5", features = [ "io-util", "macros", "rt", "rt-multi-thread", "sync", "net", "time" ] }
 

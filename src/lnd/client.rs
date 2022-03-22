@@ -1,5 +1,6 @@
+use anyhow::Context;
 use std::path::PathBuf;
-use tonic::transport::channel::Channel;
+use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 
 use super::macaroon::*;
 
@@ -13,6 +14,7 @@ pub type Lnd = proto::lightning_client::LightningClient<Channel>;
 pub struct LndConfig {
     admin_endpoint: String,
     macaroon_path: PathBuf,
+    tls_cert_path: PathBuf,
 }
 
 pub(super) struct LndClient {
@@ -23,8 +25,21 @@ pub(super) struct LndClient {
 impl LndClient {
     pub async fn new(config: LndConfig) -> anyhow::Result<LndClient> {
         let macaroon = MacaroonData::from_file_path(config.macaroon_path)?;
-        let inner = Lnd::connect(format!("https://{}", config.admin_endpoint)).await?;
-        Ok(LndClient { inner, macaroon })
+        let data: Vec<u8> =
+            std::fs::read(config.tls_cert_path).context("Couldn't read lnd cert")?;
+        let cert = Certificate::from_pem(data);
+        // let certs = rustls::pemfile::certs(
+        //     std::fs::read(config.tls_cert_path).context("Couldn't read lnd cert")?,
+        // );
+        let client_config = rustls::ClientConfig::new();
+        let channel = Channel::builder(format!("https://{}", config.admin_endpoint).parse()?)
+            .tls_config(ClientTlsConfig::new().rustls_client_config(client_config))?
+            .connect()
+            .await?;
+        Ok(LndClient {
+            inner: Lnd::new(channel),
+            macaroon,
+        })
     }
 
     pub async fn list_channels(&mut self) -> anyhow::Result<Vec<proto::Channel>> {
