@@ -1,7 +1,9 @@
+mod convert;
 mod proto {
     tonic::include_proto!("connector");
 }
 
+use bitcoin::secp256k1::PublicKey;
 use futures::Stream;
 use std::{collections::HashMap, pin::Pin, sync::Arc};
 use tokio::sync::{mpsc, RwLock};
@@ -11,6 +13,7 @@ use uuid::Uuid;
 
 use crate::{
     config::{self, ServerConfig},
+    node_client::NodeClient,
     update::ConnectorUpdate,
 };
 use proto::{
@@ -22,15 +25,27 @@ type ConnectorResponse<T> = Result<Response<T>, Status>;
 type ResponseStream = Pin<Box<dyn Stream<Item = Result<UpdateEvent, Status>> + Send>>;
 
 struct ConnectorServer {
+    uuid: Uuid,
+    node_pubkey: PublicKey,
+    node_client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
     update_clients: Arc<RwLock<HashMap<Uuid, mpsc::Sender<UpdateEvent>>>>,
 }
 
 impl ConnectorServer {
-    pub fn new(incoming_updates: mpsc::Receiver<ConnectorUpdate>) -> Self {
+    pub fn new(
+        uuid: Uuid,
+        node_pubkey: PublicKey,
+        node_client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
+    ) -> Self {
         let update_clients = Arc::new(RwLock::new(HashMap::new()));
-        Self::spawn_fanout_updates(incoming_updates, Arc::clone(&update_clients));
-        Self { update_clients }
+        Self {
+            uuid,
+            node_pubkey,
+            update_clients,
+            node_client,
+        }
     }
+
     pub fn spawn_fanout_updates(
         mut incoming_updates: mpsc::Receiver<ConnectorUpdate>,
         clients: Arc<RwLock<HashMap<Uuid, mpsc::Sender<UpdateEvent>>>>,
@@ -60,9 +75,16 @@ impl ConnectorServer {
 
 #[tonic::async_trait]
 impl LnctlConnector for ConnectorServer {
-    async fn ping(&self, request: Request<PingRequest>) -> Result<Response<PingResponse>, Status> {
-        Ok(Response::new(PingResponse {
-            salt: request.into_inner().salt,
+    async fn get_status(
+        &self,
+        _request: Request<GetStatusRequest>,
+    ) -> Result<Response<GetStatusResponse>, Status> {
+        let client = self.node_client.write().await;
+
+        Ok(Response::new(GetStatusResponse {
+            connector_id: self.uuid.to_string(),
+            node_pubkey: self.node_pubkey.to_string(),
+            r#type: proto::ConnectorType::from(client.node_type()) as i32,
         }))
     }
 
@@ -82,13 +104,22 @@ impl LnctlConnector for ConnectorServer {
     }
 }
 
-pub async fn run_server(config: ServerConfig) -> anyhow::Result<mpsc::Sender<ConnectorUpdate>> {
-    let (send, receive) = mpsc::channel(100);
+pub async fn run_server(
+    config: ServerConfig,
+    uuid: Uuid,
+    node_pubkey: PublicKey,
+    node_client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
+) -> anyhow::Result<()> {
+    println!("Connector {} - monitoring {}", uuid, node_pubkey);
     Server::builder()
-        .add_service(LnctlConnectorServer::new(ConnectorServer::new(receive)))
+        .add_service(LnctlConnectorServer::new(ConnectorServer::new(
+            uuid,
+            node_pubkey,
+            node_client,
+        )))
         .serve(([0, 0, 0, 0], config.port).into())
         .await?;
-    Ok(send)
+    Ok(())
 }
 
 impl From<ConnectorUpdate> for UpdateEvent {

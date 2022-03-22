@@ -8,7 +8,7 @@ run-server: build
 	RUST_BACKTRACE=full cargo run server
 
 integration: build
-	RUST_BACKTRACE=1 bats -t -r test/integration
+	RUST_BACKTRACE=1 bats -t -r test/connector
 
 clippy:
 	cargo clippy --all-features

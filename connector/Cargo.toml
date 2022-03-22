@@ -10,13 +10,15 @@ default = ["lnd"]
 lnd = ["tonic_lnd"]
 
 [dependencies]
-tonic_lnd = { version = "0.3", optional = true }
 
 anyhow = "1.0"
+bitcoin = { version = "0.27", features = ["use-serde"] }
 futures = { version = "0.3", default-features = false, features = ["alloc"] }
+lightning = { version = "0.0.104" }
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 tonic = { version = "0.6", features = ["tls", "transport"] }
+tonic_lnd = { version = "0.3", optional = true }
 uuid = { version = "0.8", features = ["v4"] }
 prost = "0.9"
 tokio = { version = "1.5", features = [ "io-util", "macros", "rt", "rt-multi-thread", "sync", "net", "time" ] }

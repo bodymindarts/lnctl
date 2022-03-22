@@ -3,15 +3,18 @@ syntax = "proto3";
 package connector;
 
 service LnctlConnector {
-  rpc Ping(PingRequest) returns (PingResponse) {}
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse) {}
   rpc StreamUpdates(StreamUpdatesRequest) returns (stream UpdateEvent) {}
 }
 
-message PingRequest {
-  string salt = 1;
+message GetStatusRequest {}
+message GetStatusResponse {
+  string connector_id = 1;
+  string node_pubkey = 2;
+  ConnectorType type = 3;
 }
-message PingResponse {
-  string salt = 1;
+enum ConnectorType {
+  LND = 0;
 }
 
 message StreamUpdatesRequest { }
