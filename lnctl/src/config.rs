@@ -1,11 +1,13 @@
 use anyhow::Context;
 use connector::ConnectorConfig;
+use coordinator::CoordinatorConfig;
 use serde::Deserialize;
 use std::path::Path;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     pub connector: ConnectorConfig,
+    pub coordinator: CoordinatorConfig,
 }
 
 impl Config {

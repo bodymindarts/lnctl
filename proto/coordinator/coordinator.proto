@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package coordinator;
+
+service LnctlCoordinator {
+  rpc ListConnectors(ListConnectorsRequest) returns (ListConnectorsResponse) {}
+}
+
+message ListConnectorsRequest {}
+
+message ListConnectorsResponse {
+  repeated ConnectorInfo connectors = 1;
+}
+
+message ConnectorInfo {
+  string pubkey = 1;
+}

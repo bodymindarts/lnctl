@@ -1,22 +1,20 @@
 [package]
-name = "lnctl"
+name = "coordinator"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-connector = { path = "../connector" }
-coordinator = { path = "../coordinator" }
-
 anyhow = "1.0"
-clap = { version =  "3.0", features = ["derive"] }
+futures = { version = "0.3", default-features = false, features = ["alloc"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
-serde_json = { version = "1.0" }
 tonic = { version = "0.6", features = ["tls", "transport"] }
+uuid = { version = "0.8", features = ["v4"] }
 prost = "0.9"
 tokio = { version = "1.5", features = [ "io-util", "macros", "rt", "rt-multi-thread", "sync", "net", "time" ] }
+tokio-stream = "0.1"
 
 [build-dependencies]
 tonic-build = { version = "0.6" , features = ["prost"] }

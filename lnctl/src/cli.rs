@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
-use crate::config::Config;
+use crate::{client, config::Config};
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -17,6 +17,8 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Connector {},
+    Server {},
+    ListConnectors {},
 }
 
 const DEFAULT_CONFIG: &str = "lnctl.yml";
@@ -29,6 +31,17 @@ pub async fn run() -> anyhow::Result<()> {
     match cli.command {
         Commands::Connector {} => {
             connector::run(config.connector).await?;
+        }
+        Commands::Server {} => {
+            coordinator::run(config.coordinator).await?;
+        }
+        Commands::ListConnectors {} => {
+            let config = client::ClientConfig {
+                addr: "localhost".to_string(),
+                port: config.coordinator.server.port,
+            };
+
+            client::list_connectors(config).await?;
         }
     }
     Ok(())
