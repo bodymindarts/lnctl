@@ -2,7 +2,7 @@ build:
 	cargo build
 
 test:
-	RUST_BACKTRACE=full cargo watch -s 'cargo test -- --nocapture'
+	RUST_BACKTRACE=full cargo watch -s 'cargo test --all-features -- --nocapture'
 
 run-server: build
 	RUST_BACKTRACE=full cargo run server

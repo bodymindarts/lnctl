@@ -2,6 +2,5 @@
 
 members = [
   "connector",
-  "connector-lnd",
   "lnctl",
 ]
