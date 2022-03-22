@@ -1,36 +1,7 @@
-[package]
-name = "lnctl"
-version = "0.1.0"
-edition = "2021"
+[workspace]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-anyhow = "1.0"
-base64 = "0.13.0"
-bitcoin = { version = "0.27", features = ["use-serde"] }
-bitcoin-bech32 = "0.12"
-bech32 = "0.8"
-ctrlc = "3.2"
-clap = { version =  "3.0", features = ["derive"] }
-hex = "0.3"
-serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.8"
-serde_json = { version = "1.0" }
-lightning = { version = "0.0.104", features = ["max_level_trace"] }
-lightning-background-processor = { version = "0.0.104" }
-lightning-block-sync = { version = "0.0.104", features = [ "rpc-client" ] }
-lightning-net-tokio = { version = "0.0.104" }
-lightning-persister = { version = "0.0.104" }
-lightning-invoice = { version = "0.12.0" }
-
-rand = "0.4"
-futures = "0.3"
-
-rustls = "0.19"
-tonic = { version = "0.6", features = ["tls", "transport"] }
-prost = "0.9"
-tokio = { version = "1.5", features = [ "io-util", "macros", "rt", "rt-multi-thread", "sync", "net", "time" ] }
-
-[build-dependencies]
-tonic-build = { version = "0.6" , features = ["prost"] }
+members = [
+  "connector",
+  "connector-lnd",
+  "lnctl",
+]

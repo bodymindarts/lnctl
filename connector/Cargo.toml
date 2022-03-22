@@ -1,0 +1,17 @@
+[package]
+name = "connector"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.8"
+tonic = { version = "0.6", features = ["tls", "transport"] }
+prost = "0.9"
+tokio = { version = "1.5", features = [ "io-util", "macros", "rt", "rt-multi-thread", "sync", "net", "time" ] }
+
+[build-dependencies]
+tonic-build = { version = "0.6" , features = ["prost"] }

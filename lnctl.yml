@@ -12,3 +12,12 @@ connectors:
     admin_endpoint: localhost:10009
     macaroon_path: "dev/lnd/lnd1.macaroon"
     tls_cert_path: "dev/lnd/tls.cert"
+
+connector:
+  type: lnd
+  lnd:
+
+  server:
+    port: 1209
+    tls:
+      cert_file:

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package connector;
+
+service LnctlConnector {
+  rpc Ping(PingRequest) returns (PingResponse) {}
+  rpc StreamUpdates(StreamUpdatesRequest) returns (stream UpdateEvent) {}
+}
+
+message PingRequest {
+  string salt = 1;
+}
+message PingResponse {
+  string salt = 1;
+}
+
+message StreamUpdatesRequest { }
+message UpdateEvent { }
