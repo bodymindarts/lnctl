@@ -1,13 +1,9 @@
 connector:
   type: lnd
   lnd:
+    admin_endpoint: "localhost:10009"
+    cert_path: "dev/lnd/tls.cert"
+    macaroon_path: "dev/lnd/lnd1.macaroon"
 
-  server:
-    port: 1209
-    tls:
-      cert_file:
-
-# coordinator:
-#   server:
-#     port: 
-#     tls:
+coordinator:
+  connectors_file: test/coordinator/connectors

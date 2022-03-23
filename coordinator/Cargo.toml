@@ -15,6 +15,7 @@ uuid = { version = "0.8", features = ["v4"] }
 prost = "0.9"
 tokio = { version = "1.5", features = [ "io-util", "macros", "rt", "rt-multi-thread", "sync", "net", "time" ] }
 tokio-stream = "0.1"
+notify = "4.0"
 
 [build-dependencies]
 tonic-build = { version = "0.6" , features = ["prost"] }

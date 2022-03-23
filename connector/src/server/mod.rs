@@ -111,6 +111,7 @@ pub async fn run_server(
     node_client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
 ) -> anyhow::Result<()> {
     println!("Connector {} - monitoring {}", uuid, node_pubkey);
+    println!("Listening on port {}", config.port);
     Server::builder()
         .add_service(LnctlConnectorServer::new(ConnectorServer::new(
             uuid,

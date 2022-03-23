@@ -9,14 +9,15 @@ setup_file() {
 
 teardown_file() {
   teardown_network
+  stop_connector
 }
 
 @test "Connector can run" {
-  run_connector
+  start_connector
 
-  sleep 2
+  retry 5 1 curl_connector GetStatus
 
-  connector_id=$(grpcurl -plaintext -import-path ./proto/connector -proto connector.proto localhost:5626 connector.LnctlConnector/GetStatus | jq -r '.connectorId')
+  connector_id=$(curl_connector GetStatus | jq -r '.connectorId')
   [[ "${connector_id}" = "$(cat .lnctl/connector/connector-id)" ]]
 
   stop_connector

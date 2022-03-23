@@ -21,11 +21,16 @@ pub struct ConnectorConfig {
     #[serde(default)]
     pub server: ServerConfig,
     pub connector: Connector,
-    pub data_dir: Option<PathBuf>,
+    #[serde(default = "default_data_dir")]
+    pub data_dir: PathBuf,
 }
 
 fn default_server_port() -> u16 {
     5626
+}
+
+fn default_data_dir() -> PathBuf {
+    PathBuf::from(".lnctl/connector")
 }
 
 impl Default for ServerConfig {

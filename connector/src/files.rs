@@ -7,12 +7,10 @@ use std::{
 };
 use uuid::Uuid;
 
-const DEFAULT_DATA_DIR: &str = ".lnctl/connector";
 const UUID_FILE_NAME: &str = "connector-id";
 const NODE_PUBKEY_FILE_NAME: &str = "node-pubkey";
 
-pub fn init(path: Option<PathBuf>, pubkey: &PublicKey) -> anyhow::Result<Uuid> {
-    let path = path.unwrap_or_else(|| PathBuf::from(DEFAULT_DATA_DIR));
+pub fn init(path: PathBuf, pubkey: &PublicKey) -> anyhow::Result<Uuid> {
     fs::create_dir_all(&path).context("failed to create data dir")?;
     fs::write(format!("{}/pid", path.display()), process::id().to_string())?;
 

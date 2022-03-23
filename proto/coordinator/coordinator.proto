@@ -13,5 +13,7 @@ message ListConnectorsResponse {
 }
 
 message ConnectorInfo {
-  string pubkey = 1;
+  string id = 1;
+  string node_pubkey = 2;
+  string type = 3;
 }

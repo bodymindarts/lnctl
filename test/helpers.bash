@@ -1,11 +1,28 @@
-export CONNECTOR_CONFIG=./test/connector/test-config.yml
+export CONNECTOR_CONFIG=./test/connector/connector.yml
+export COORDINATOR_CONFIG=./test/coordinator/coordinator.yml
 
-run_connector() {
+start_connector() {
   background cargo run --bin connector
 }
 
 stop_connector() {
   [ -f .lnctl/connector/pid ] && kill $(cat .lnctl/connector/pid) > /dev/null || true
+}
+
+start_coordinator() {
+  background cargo run --bin coordinator
+}
+
+stop_coordinator() {
+  [ -f .lnctl/coordinator/pid ] && kill $(cat .lnctl/coordinator/pid) > /dev/null || true
+}
+
+curl_connector() {
+  grpcurl -plaintext -import-path ./proto/connector -proto connector.proto localhost:5626 connector.LnctlConnector/$1 
+}
+
+curl_coordinator() {
+  grpcurl -plaintext -import-path ./proto/coordinator -proto coordinator.proto localhost:5625 coordinator.LnctlCoordinator/$1 
 }
 
 start_network() {
@@ -65,4 +82,26 @@ fetch_macaroon() {
 background() {
   "$@" 3>- &
   echo $!
+}
+# Stolen from
+# https://github.com/docker/swarm/blob/master/test/integration/helpers.bash
+retry() {
+  local attempts=$1
+  shift
+  local delay=$1
+  shift
+  local i
+
+  for ((i=0; i < attempts; i++)); do
+    run "$@"
+    # shellcheck disable=2154
+    if [[ "$status" -eq 0 ]] ; then
+      return 0
+    fi
+    sleep "$delay"
+  done
+
+  # shellcheck disable=2154
+  echo "Command \"$*\" failed $attempts times. Output: $output"
+  false
 }
