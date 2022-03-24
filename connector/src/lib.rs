@@ -1,6 +1,6 @@
 mod config;
 mod files;
-// mod gossip;
+mod gossip;
 #[cfg(feature = "lnd")]
 mod lnd;
 mod server;

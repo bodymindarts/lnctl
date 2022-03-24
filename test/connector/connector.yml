@@ -4,3 +4,6 @@ connector:
     admin_endpoint: "localhost:10009"
     cert_path: "dev/lnd/tls.cert"
     macaroon_path: "dev/lnd/lnd1.macaroon"
+
+gossip:
+  host: host.docker.internal

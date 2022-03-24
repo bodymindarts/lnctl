@@ -10,6 +10,13 @@ pub struct ServerConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct GossipConfig {
+    #[serde(default = "default_gossip_port")]
+    pub port: u16,
+    pub host: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct Connector {
     pub r#type: String,
     #[cfg(feature = "lnd")]
@@ -21,12 +28,17 @@ pub struct ConnectorConfig {
     #[serde(default)]
     pub server: ServerConfig,
     pub connector: Connector,
+    pub gossip: GossipConfig,
     #[serde(default = "default_data_dir")]
     pub data_dir: PathBuf,
 }
 
 fn default_server_port() -> u16 {
     5626
+}
+
+fn default_gossip_port() -> u16 {
+    5635
 }
 
 fn default_data_dir() -> PathBuf {
