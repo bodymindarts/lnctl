@@ -33,4 +33,21 @@ impl NodeClient for LndClient {
         let response = self.inner.get_info(GetInfoRequest {}).await?;
         Ok(PublicKey::from_str(&response.into_inner().identity_pubkey)?)
     }
+
+    async fn connect_to_peer(
+        &mut self,
+        node_pubkey: PublicKey,
+        node_addr: String,
+    ) -> anyhow::Result<()> {
+        let request = ConnectPeerRequest {
+            addr: Some(LightningAddress {
+                pubkey: node_pubkey.to_string(),
+                host: node_addr,
+            }),
+            perm: true,
+            timeout: 30,
+        };
+        let _ = self.inner.connect_peer(request).await?;
+        Ok(())
+    }
 }

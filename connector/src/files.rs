@@ -13,18 +13,20 @@ use std::{
 };
 use uuid::Uuid;
 
+use super::identifier::ConnectorIdentifier;
+
 const CONNECTOR_SEED_FILE: &str = "seed";
 const UUID_FILE_NAME: &str = "connector-id";
 const NODE_PUBKEY_FILE_NAME: &str = "node-pubkey";
 
-pub fn init(path: PathBuf, pubkey: &PublicKey) -> anyhow::Result<(SecretKey, Uuid)> {
+pub fn init(path: PathBuf, pubkey: &PublicKey) -> anyhow::Result<ConnectorIdentifier> {
     fs::create_dir_all(&path).context("failed to create data dir")?;
     fs::write(format!("{}/pid", path.display()), process::id().to_string())?;
 
     let secp_ctx = Secp256k1::new();
     let secret_key = init_node_secret(&path, &secp_ctx)?;
-    let node_pubkey = PublicKey::from_secret_key(&secp_ctx, &secret_key);
-    let uuid = uuid::Builder::from_slice(&node_pubkey.serialize()[0..16])?
+    let connector_pubkey = PublicKey::from_secret_key(&secp_ctx, &secret_key);
+    let uuid = uuid::Builder::from_slice(&connector_pubkey.serialize()[0..16])?
         .set_variant(uuid::Variant::RFC4122)
         .set_version(uuid::Version::Random)
         .build();
@@ -45,7 +47,11 @@ pub fn init(path: PathBuf, pubkey: &PublicKey) -> anyhow::Result<(SecretKey, Uui
     } else {
         fs::write(node_pubkey_file_name, pubkey.to_string())?;
     }
-    Ok((secret_key, uuid))
+    Ok(ConnectorIdentifier {
+        uuid,
+        public_key: connector_pubkey,
+        secret_key,
+    })
 }
 
 fn init_node_secret<C: Signing>(

@@ -1,6 +1,7 @@
 mod config;
 mod files;
 mod gossip;
+mod identifier;
 #[cfg(feature = "lnd")]
 mod lnd;
 mod server;
@@ -24,12 +25,12 @@ pub async fn run(config: ConnectorConfig) -> anyhow::Result<()> {
         _ => anyhow::bail!("Connector type not supported"),
     };
     let node_pubkey = client.node_pubkey().await?;
-    let (connector_secret, uuid) =
+    let connector_identifier =
         files::init(config.data_dir, &node_pubkey).context("creating cache files")?;
-    let _receiver = Gossip::listen(config.gossip.port, connector_secret);
+    let _receiver = Gossip::listen(config.gossip.port, connector_identifier.secret_key);
     server::run_server(
         config.server,
-        uuid,
+        connector_identifier.uuid,
         node_pubkey,
         Arc::new(RwLock::new(client)),
     )
