@@ -22,13 +22,13 @@ use proto::{
 };
 
 type ConnectorResponse<T> = Result<Response<T>, Status>;
-type ResponseStream = Pin<Box<dyn Stream<Item = Result<UpdateEvent, Status>> + Send>>;
+type ResponseStream = Pin<Box<dyn Stream<Item = Result<NodeEvent, Status>> + Send>>;
 
 struct ConnectorServer {
     uuid: Uuid,
     node_pubkey: PublicKey,
     node_client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
-    update_clients: Arc<RwLock<HashMap<Uuid, mpsc::Sender<UpdateEvent>>>>,
+    node_event_clients: Arc<RwLock<HashMap<Uuid, mpsc::Sender<NodeEvent>>>>,
 }
 
 impl ConnectorServer {
@@ -37,27 +37,27 @@ impl ConnectorServer {
         node_pubkey: PublicKey,
         node_client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
     ) -> Self {
-        let update_clients = Arc::new(RwLock::new(HashMap::new()));
+        let node_event_clients = Arc::new(RwLock::new(HashMap::new()));
         Self {
             uuid,
             node_pubkey,
-            update_clients,
+            node_event_clients,
             node_client,
         }
     }
 
     pub fn spawn_fanout_updates(
         mut incoming_updates: mpsc::Receiver<ConnectorUpdate>,
-        clients: Arc<RwLock<HashMap<Uuid, mpsc::Sender<UpdateEvent>>>>,
+        clients: Arc<RwLock<HashMap<Uuid, mpsc::Sender<NodeEvent>>>>,
     ) {
         tokio::spawn(async move {
             while let Some(item) = incoming_updates.recv().await {
-                let event = UpdateEvent::from(item);
+                let event = NodeEvent::from(item);
                 let mut remove_clients = Vec::new();
                 {
                     let clients = clients.read().await;
                     for (client_id, tx) in clients.iter() {
-                        if let Err(_) = tx.send(UpdateEvent::clone(&event)).await {
+                        if let Err(_) = tx.send(NodeEvent::clone(&event)).await {
                             remove_clients.push(*client_id);
                         }
                     }
@@ -88,18 +88,18 @@ impl LnctlConnector for ConnectorServer {
         }))
     }
 
-    type StreamUpdatesStream = ResponseStream;
-    async fn stream_updates(
+    type StreamNodeEventsStream = ResponseStream;
+    async fn stream_node_events(
         &self,
-        _request: Request<StreamUpdatesRequest>,
-    ) -> ConnectorResponse<Self::StreamUpdatesStream> {
+        _request: Request<StreamNodeEventsRequest>,
+    ) -> ConnectorResponse<Self::StreamNodeEventsStream> {
         let (tx, rx) = mpsc::channel(config::DEFAULT_CHANNEL_SIZE);
-        let mut clients = self.update_clients.write().await;
+        let mut clients = self.node_event_clients.write().await;
         clients.insert(Uuid::new_v4(), tx);
 
         let output_stream = ReceiverStream::new(rx).map(|update| Ok(update));
         Ok(Response::new(
-            Box::pin(output_stream) as Self::StreamUpdatesStream
+            Box::pin(output_stream) as Self::StreamNodeEventsStream
         ))
     }
 }
@@ -123,8 +123,8 @@ pub async fn run_server(
     Ok(())
 }
 
-impl From<ConnectorUpdate> for UpdateEvent {
+impl From<ConnectorUpdate> for NodeEvent {
     fn from(_: ConnectorUpdate) -> Self {
-        UpdateEvent {}
+        NodeEvent {}
     }
 }

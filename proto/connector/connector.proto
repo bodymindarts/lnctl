@@ -4,7 +4,7 @@ package connector;
 
 service LnctlConnector {
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse) {}
-  rpc StreamUpdates(StreamUpdatesRequest) returns (stream UpdateEvent) {}
+  rpc StreamNodeEvents(StreamNodeEventsRequest) returns (stream NodeEvent) {}
 }
 
 message GetStatusRequest {}
@@ -17,5 +17,13 @@ enum ConnectorType {
   LND = 0;
 }
 
-message StreamUpdatesRequest { }
-message UpdateEvent { }
+message StreamNodeEventsRequest { }
+message NodeEvent {
+  /* oneof event { */
+  /*   LnGossip gossip = 1; */
+  /* } */
+}
+/* message LnGossip { */
+/*   string node_pubkey = 1; */
+/*   string alias = 2; */
+/* } */
