@@ -19,11 +19,18 @@ enum ConnectorType {
 
 message StreamNodeEventsRequest { }
 message NodeEvent {
-  /* oneof event { */
-  /*   LnGossip gossip = 1; */
-  /* } */
+  string connector_id = 1;
+  string node_pubkey = 2;
+
+  oneof event {
+    LnGossip gossip = 3;
+  }
 }
-/* message LnGossip { */
-/*   string node_pubkey = 1; */
-/*   string alias = 2; */
-/* } */
+message LnGossip {
+  oneof message {
+    NodeAnnouncement node_announcement = 1;
+  }
+}
+message NodeAnnouncement {
+  string announced_pubkey = 1;
+}

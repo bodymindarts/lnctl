@@ -13,6 +13,7 @@ use uuid::Uuid;
 
 use crate::{
     config::{self, ServerConfig},
+    gossip::GossipMessage,
     node_client::NodeClient,
     update::ConnectorUpdate,
 };
@@ -35,9 +36,16 @@ impl ConnectorServer {
     pub fn new(
         uuid: Uuid,
         node_pubkey: PublicKey,
+        gossip_receiver: mpsc::Receiver<GossipMessage>,
         node_client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
     ) -> Self {
         let node_event_clients = Arc::new(RwLock::new(HashMap::new()));
+        Self::spawn_fanout_updates(
+            uuid,
+            node_pubkey,
+            gossip_receiver,
+            Arc::clone(&node_event_clients),
+        );
         Self {
             uuid,
             node_pubkey,
@@ -47,12 +55,15 @@ impl ConnectorServer {
     }
 
     pub fn spawn_fanout_updates(
-        mut incoming_updates: mpsc::Receiver<ConnectorUpdate>,
+        uuid: Uuid,
+        node_pubkey: PublicKey,
+        mut gossip_receiver: mpsc::Receiver<GossipMessage>,
         clients: Arc<RwLock<HashMap<Uuid, mpsc::Sender<NodeEvent>>>>,
     ) {
         tokio::spawn(async move {
-            while let Some(item) = incoming_updates.recv().await {
-                let event = NodeEvent::from(item);
+            while let Some(item) = gossip_receiver.recv().await {
+                println!("Forwarding gossip message {:?}", item);
+                let event = NodeEvent::from((uuid, node_pubkey, item));
                 let mut remove_clients = Vec::new();
                 {
                     let clients = clients.read().await;
@@ -108,6 +119,7 @@ pub async fn run_server(
     config: ServerConfig,
     uuid: Uuid,
     node_pubkey: PublicKey,
+    receiver: mpsc::Receiver<GossipMessage>,
     node_client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
 ) -> anyhow::Result<()> {
     println!("Connector {} - monitoring {}", uuid, node_pubkey);
@@ -116,15 +128,10 @@ pub async fn run_server(
         .add_service(LnctlConnectorServer::new(ConnectorServer::new(
             uuid,
             node_pubkey,
+            receiver,
             node_client,
         )))
         .serve(([0, 0, 0, 0], config.port).into())
         .await?;
     Ok(())
-}
-
-impl From<ConnectorUpdate> for NodeEvent {
-    fn from(_: ConnectorUpdate) -> Self {
-        NodeEvent {}
-    }
 }

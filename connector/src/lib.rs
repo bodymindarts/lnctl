@@ -24,14 +24,24 @@ pub async fn run(config: ConnectorConfig) -> anyhow::Result<()> {
         "lnd" => lnd::run(config.connector.lnd).await?,
         _ => anyhow::bail!("Connector type not supported"),
     };
+
     let node_pubkey = client.node_pubkey().await?;
     let connector_identifier =
         files::init(config.data_dir, &node_pubkey).context("creating cache files")?;
-    let _receiver = Gossip::listen(config.gossip.port, connector_identifier.secret_key);
+    let receiver = Gossip::listen(config.gossip.port, connector_identifier.secret_key);
+
+    let _ = client
+        .connect_to_peer(
+            connector_identifier.public_key,
+            format!("{}:{}", config.gossip.host, config.gossip.port),
+        )
+        .await?;
+
     server::run_server(
         config.server,
         connector_identifier.uuid,
         node_pubkey,
+        receiver,
         Arc::new(RwLock::new(client)),
     )
     .await?;
