@@ -32,7 +32,7 @@ impl LnctlCoordinator for CoordinatorServer {
                 .iter()
                 .map(|(id, con)| ConnectorInfo {
                     id: id.to_string(),
-                    node_pubkey: con.node_pubkey.clone(),
+                    monitored_node_id: con.monitored_node_id.clone(),
                     r#type: con.r#type.clone(),
                 })
                 .collect(),

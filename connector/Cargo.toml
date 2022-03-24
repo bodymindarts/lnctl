@@ -14,8 +14,8 @@ lnd = ["tonic_lnd"]
 anyhow = "1.0"
 bitcoin = { version = "0.27", features = ["use-serde"] }
 futures = { version = "0.3", default-features = false, features = ["alloc"] }
-lightning = { version = "0.0.105" }
-lightning-net-tokio = { version = "0.0.105" }
+lightning = { git = "https://github.com/lightningdevkit/rust-lightning" }
+lightning-net-tokio = { git = "https://github.com/lightningdevkit/rust-lightning" }
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 tonic = { version = "0.6", features = ["tls", "transport"] }

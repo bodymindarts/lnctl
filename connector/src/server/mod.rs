@@ -26,7 +26,7 @@ type ResponseStream = Pin<Box<dyn Stream<Item = Result<NodeEvent, Status>> + Sen
 
 struct ConnectorServer {
     connector_id: ConnectorId,
-    node_pubkey: MonitoredNodeId,
+    monitored_node_id: MonitoredNodeId,
     node_client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
     node_event_clients: Arc<RwLock<HashMap<Uuid, mpsc::Sender<NodeEvent>>>>,
 }
@@ -39,30 +39,23 @@ impl ConnectorServer {
         node_client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
     ) -> Self {
         let node_event_clients = Arc::new(RwLock::new(HashMap::new()));
-        Self::spawn_fanout_updates(
-            connector_id,
-            node_pubkey,
-            gossip_receiver,
-            Arc::clone(&node_event_clients),
-        );
+        Self::spawn_fanout_updates(gossip_receiver, Arc::clone(&node_event_clients));
         Self {
             connector_id,
-            node_pubkey,
+            monitored_node_id: node_pubkey,
             node_event_clients,
             node_client,
         }
     }
 
     pub fn spawn_fanout_updates(
-        connector_id: ConnectorId,
-        node_pubkey: MonitoredNodeId,
         mut gossip_receiver: mpsc::Receiver<GossipMessage>,
         clients: Arc<RwLock<HashMap<Uuid, mpsc::Sender<NodeEvent>>>>,
     ) {
         tokio::spawn(async move {
             while let Some(item) = gossip_receiver.recv().await {
-                println!("Forwarding gossip message {:?}", item);
-                let event = NodeEvent::from((connector_id, node_pubkey, item));
+                println!("Forwarding gossip message: {:?}", item);
+                let event = NodeEvent::from(item);
                 let mut remove_clients = Vec::new();
                 {
                     let clients = clients.read().await;
@@ -93,7 +86,7 @@ impl LnctlConnector for ConnectorServer {
 
         Ok(Response::new(GetStatusResponse {
             connector_id: self.connector_id.to_string(),
-            node_pubkey: self.node_pubkey.to_string(),
+            monitored_node_id: self.monitored_node_id.to_string(),
             r#type: proto::ConnectorType::from(client.node_type()) as i32,
         }))
     }

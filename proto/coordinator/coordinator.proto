@@ -14,6 +14,6 @@ message ListConnectorsResponse {
 
 message ConnectorInfo {
   string id = 1;
-  string node_pubkey = 2;
+  string monitored_node_id = 2;
   string type = 3;
 }

@@ -10,7 +10,7 @@ service LnctlConnector {
 message GetStatusRequest {}
 message GetStatusResponse {
   string connector_id = 1;
-  string node_pubkey = 2;
+  string monitored_node_id = 2;
   ConnectorType type = 3;
 }
 enum ConnectorType {
@@ -19,9 +19,6 @@ enum ConnectorType {
 
 message StreamNodeEventsRequest { }
 message NodeEvent {
-  string connector_id = 1;
-  string monitored_node_id = 2;
-
   oneof event {
     LnGossip gossip = 3;
   }

@@ -1,19 +1,24 @@
-use bitcoin::secp256k1::key::PublicKey;
+use bitcoin::{blockdata::constants, secp256k1::key::PublicKey};
 use lightning::{
     ln::msgs::*,
     util::events::{MessageSendEvent, MessageSendEventsProvider},
 };
+use std::sync::Mutex;
 use tokio::sync::mpsc;
 
 use super::message::GossipMessage;
 
 pub struct RoutingMessageForwarder {
     sender: mpsc::Sender<GossipMessage>,
+    pending_events: Mutex<Vec<MessageSendEvent>>,
 }
 
 impl RoutingMessageForwarder {
     pub fn new(sender: mpsc::Sender<GossipMessage>) -> Self {
-        Self { sender }
+        Self {
+            sender,
+            pending_events: Mutex::new(Vec::new()),
+        }
     }
 
     fn forward_message(&self, msg: GossipMessage) {
@@ -35,8 +40,11 @@ impl RoutingMessageHandler for RoutingMessageForwarder {
     }
     fn handle_channel_announcement(
         &self,
-        _msg: &ChannelAnnouncement,
+        msg: &ChannelAnnouncement,
     ) -> Result<bool, LightningError> {
+        self.forward_message(GossipMessage::NodeAnnouncement {
+            node_id: msg.contents.node_id_1.into(),
+        });
         Ok(false)
     }
     fn handle_channel_update(&self, _msg: &ChannelUpdate) -> Result<bool, LightningError> {
@@ -61,7 +69,29 @@ impl RoutingMessageHandler for RoutingMessageForwarder {
     ) -> Vec<NodeAnnouncement> {
         Vec::new()
     }
-    fn sync_routing_table(&self, _their_node_id: &PublicKey, _init: &Init) {}
+
+    fn peer_connected(&self, their_node_id: &PublicKey, init_msg: &Init) {
+        // We will only perform a sync with peers that support gossip_queries.
+        if !init_msg.features.supports_gossip_queries() {
+            return ();
+        }
+
+        // Send a gossip_timestamp_filter to enable gossip message receipt. Note that we have to
+        // use a "all timestamps" filter as sending the current timestamp would result in missing
+        // gossip messages that are simply sent late. We could calculate the intended filter time
+        // by looking at the current time and subtracting two weeks (before which we'll reject
+        // messages), but there's not a lot of reason to bother - our peers should be discarding
+        // the same messages.
+        let mut pending_events = self.pending_events.lock().unwrap();
+        pending_events.push(MessageSendEvent::SendGossipTimestampFilter {
+            node_id: their_node_id.clone(),
+            msg: GossipTimestampFilter {
+                chain_hash: constants::genesis_block(bitcoin::Network::Bitcoin).block_hash(),
+                first_timestamp: 0,
+                timestamp_range: u32::max_value(),
+            },
+        });
+    }
 
     fn handle_reply_channel_range(
         &self,
@@ -95,6 +125,9 @@ impl RoutingMessageHandler for RoutingMessageForwarder {
 
 impl MessageSendEventsProvider for RoutingMessageForwarder {
     fn get_and_clear_pending_msg_events(&self) -> Vec<MessageSendEvent> {
-        return Vec::new();
+        let mut ret = Vec::new();
+        let mut pending_events = self.pending_events.lock().unwrap();
+        core::mem::swap(&mut ret, &mut pending_events);
+        ret
     }
 }

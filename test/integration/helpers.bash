@@ -1,33 +1,11 @@
-export CONNECTOR_CONFIG=./test/connector/connector.yml
-export COORDINATOR_CONFIG=./test/coordinator/coordinator.yml
+#!/usr/bin/env bats
 
-start_connector() {
-  background cargo run --bin connector
-}
-
-stop_connector() {
-  [ -f .lnctl/connector/pid ] && kill $(cat .lnctl/connector/pid) > /dev/null || true
-}
-
-start_coordinator() {
-  background cargo run --bin coordinator
-}
-
-stop_coordinator() {
-  [ -f .lnctl/coordinator/pid ] && kill $(cat .lnctl/coordinator/pid) > /dev/null || true
-}
-
-curl_connector() {
-  grpcurl -plaintext -import-path ./proto/connector -proto connector.proto localhost:5626 connector.LnctlConnector/$1 
-}
-
-curl_coordinator() {
-  grpcurl -plaintext -import-path ./proto/coordinator -proto coordinator.proto localhost:5625 coordinator.LnctlCoordinator/$1 
-}
+lnctl=./target/debug/lnctl
 
 start_network() {
-  rm -rf .lnctl || true
-  rm dev/lnd/*.macaroon || true
+  stop_lnctl
+  rm -rf .lnctl
+  rm dev/lnd/*.macaroon
   docker compose up -d bitcoind
 
   bitcoin_cmd createwallet default
@@ -39,13 +17,30 @@ start_network() {
   lnd_cmd lnd1 connect "${lnd2_pubkey}@lnd2:9735"
 }
 
+cache_value() {
+  echo $2 > ${BATS_TMPDIR}/$1
+}
+
 teardown_network() {
   docker compose down -v
 }
 
-genblocks() {
-  addr=$(bitcoin_cmd getnewaddress)
-  bitcoin_cmd generatetoaddress ${1} ${addr}
+test_tmp_dir() {
+  mkdir -p ${BATS_TMPDIR}/${BATS_TEST_NAME}
+  echo ${BATS_TMPDIR}/${BATS_TEST_NAME}
+}
+
+start_lnctl() {
+  background "${lnctl}" server
+}
+
+stop_lnctl() {
+  [ -f .lnctl/pid ] && kill $(cat .lnctl/pid) > /dev/null || true
+}
+
+restart_lnctl() {
+  stop_lnctl
+  start_lnctl
 }
 
 lnd_cmd() {
@@ -61,12 +56,21 @@ bitcoin_cmd() {
 open_channel() {
   origin=${1}
   dest=${2}
-  dest_pubkey=$(lnd_cmd ${dest} getinfo | jq -r '.identity_pubkey')
+  if [[ "${dest}" == "lnctl" ]]; then
+    dest_pubkey=$(lnctl node-status | jq -r '.id')
+  else
+    dest_pubkey=$(lnd_cmd ${dest} getinfo | jq -r '.identity_pubkey')
+  fi
   addr=$(lnd_cmd ${origin} newaddress p2wkh | jq -r '.address')
   bitcoin_cmd sendtoaddress "${addr}" 50
   genblocks 10
   lnd_cmd "${origin}" openchannel "${dest_pubkey}" 5000000 0
   genblocks 10
+}
+
+genblocks() {
+  addr=$(bitcoin_cmd getnewaddress)
+  bitcoin_cmd generatetoaddress ${1} ${addr}
 }
 
 fetch_macaroon() {
@@ -94,6 +98,7 @@ background() {
   "$@" 3>- &
   echo $!
 }
+
 # Stolen from
 # https://github.com/docker/swarm/blob/master/test/integration/helpers.bash
 retry() {

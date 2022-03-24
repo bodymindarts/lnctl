@@ -45,10 +45,10 @@ impl Connectors {
                             Ok(con) => {
                                 println!(
                                     "Connection to connector {} established @ {}",
-                                    con.id, address
+                                    con.connector_id, address
                                 );
                                 let mut connectors = connectors.write().await;
-                                connectors.insert(con.id, con);
+                                connectors.insert(con.connector_id, con);
                             }
                             Err(e) => println!("Failed to connect to {}: {}", address, e),
                         }

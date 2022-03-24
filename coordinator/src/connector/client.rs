@@ -12,11 +12,12 @@ pub type LnCtlConnectorClient = lnctl_connector_client::LnctlConnectorClient<Cha
 pub struct ConnectorClient {
     inner: LnCtlConnectorClient,
 
-    pub id: Uuid,
-    pub node_pubkey: String,
+    pub connector_id: Uuid,
+    pub monitored_node_id: String,
     pub address: String,
     pub r#type: String,
 }
+
 impl ConnectorClient {
     pub async fn connect(address: &str) -> anyhow::Result<Self> {
         let mut inner = LnCtlConnectorClient::connect(format!("http://{}", address))
@@ -24,12 +25,12 @@ impl ConnectorClient {
             .context("couldn't establish connection")?;
         let status = inner.get_status(GetStatusRequest {}).await?.into_inner();
         Ok(Self {
-            id: status.connector_id.parse()?,
+            connector_id: status.connector_id.parse()?,
             r#type: proto::ConnectorType::from_i32(status.r#type)
                 .map(String::from)
                 .unwrap_or("unknown".to_string()),
             address: address.to_string(),
-            node_pubkey: status.node_pubkey,
+            monitored_node_id: status.monitored_node_id,
             inner,
         })
     }

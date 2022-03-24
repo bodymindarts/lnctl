@@ -1,10 +1,8 @@
 use super::proto::*;
-use crate::{gossip::GossipMessage, node_client::NodeType, primitives::*};
+use crate::{gossip::GossipMessage, node_client::NodeType};
 
-impl From<(ConnectorId, MonitoredNodeId, GossipMessage)> for NodeEvent {
-    fn from(
-        (connector_id, monitored_node_id, msg): (ConnectorId, MonitoredNodeId, GossipMessage),
-    ) -> Self {
+impl From<GossipMessage> for NodeEvent {
+    fn from(msg: GossipMessage) -> Self {
         let ln_gossip = match msg {
             GossipMessage::NodeAnnouncement { node_id } => LnGossip {
                 message: Some(ln_gossip::Message::NodeAnnouncement(NodeAnnouncement {
@@ -13,8 +11,6 @@ impl From<(ConnectorId, MonitoredNodeId, GossipMessage)> for NodeEvent {
             },
         };
         NodeEvent {
-            connector_id: connector_id.to_string(),
-            monitored_node_id: monitored_node_id.to_string(),
             event: Some(node_event::Event::Gossip(ln_gossip)),
         }
     }
