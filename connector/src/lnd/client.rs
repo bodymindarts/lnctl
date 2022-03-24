@@ -4,7 +4,7 @@ use std::str::FromStr;
 use tonic_lnd::{rpc::*, Client as InnerClient};
 
 use super::config::LndConnectorConfig;
-use crate::node_client::*;
+use crate::{node_client::*, primitives::MonitoredNodeId};
 
 pub struct LndClient {
     inner: InnerClient,
@@ -29,9 +29,9 @@ impl NodeClient for LndClient {
         NodeType::Lnd
     }
 
-    async fn node_pubkey(&mut self) -> anyhow::Result<PublicKey> {
+    async fn node_pubkey(&mut self) -> anyhow::Result<MonitoredNodeId> {
         let response = self.inner.get_info(GetInfoRequest {}).await?;
-        Ok(PublicKey::from_str(&response.into_inner().identity_pubkey)?)
+        Ok(PublicKey::from_str(&response.into_inner().identity_pubkey)?.into())
     }
 
     async fn connect_to_peer(

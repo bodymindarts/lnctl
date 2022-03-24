@@ -1,11 +1,10 @@
 mod config;
 mod files;
 mod gossip;
-mod identifier;
 #[cfg(feature = "lnd")]
 mod lnd;
+mod primitives;
 mod server;
-mod update;
 
 pub mod node_client;
 
@@ -26,20 +25,20 @@ pub async fn run(config: ConnectorConfig) -> anyhow::Result<()> {
     };
 
     let node_pubkey = client.node_pubkey().await?;
-    let connector_identifier =
+    let (connector_id, connector_pubkey, connector_secret_key) =
         files::init(config.data_dir, &node_pubkey).context("creating cache files")?;
-    let receiver = Gossip::listen(config.gossip.port, connector_identifier.secret_key);
+    let receiver = Gossip::listen(config.gossip.port, connector_secret_key);
 
     let _ = client
         .connect_to_peer(
-            connector_identifier.public_key,
+            connector_pubkey.into(),
             format!("{}:{}", config.gossip.host, config.gossip.port),
         )
         .await?;
 
     server::run_server(
         config.server,
-        connector_identifier.uuid,
+        connector_id,
         node_pubkey,
         receiver,
         Arc::new(RwLock::new(client)),

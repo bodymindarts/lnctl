@@ -2,7 +2,6 @@ mod forwarder;
 mod logger;
 mod message;
 
-use bitcoin::secp256k1::SecretKey;
 use lightning::ln::peer_handler::{
     ErroringMessageHandler, IgnoringMessageHandler, MessageHandler, PeerManager,
 };
@@ -11,6 +10,7 @@ use rand::Rng;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
+use crate::primitives::ConnectorSecret;
 use forwarder::RoutingMessageForwarder;
 use logger::LnLogger;
 pub use message::GossipMessage;
@@ -26,7 +26,10 @@ pub(crate) type LnPeers = PeerManager<
 pub struct Gossip {}
 
 impl Gossip {
-    pub fn listen(listen_port: u16, connector_secret: SecretKey) -> mpsc::Receiver<GossipMessage> {
+    pub fn listen(
+        listen_port: u16,
+        connector_secret: ConnectorSecret,
+    ) -> mpsc::Receiver<GossipMessage> {
         let (send, receive) = mpsc::channel(50);
         let msg_handler = MessageHandler {
             chan_handler: Arc::new(ErroringMessageHandler::new()),
@@ -36,7 +39,7 @@ impl Gossip {
         rand::thread_rng().fill_bytes(&mut ephemeral_bytes);
         let peers = LnPeers::new(
             msg_handler,
-            connector_secret,
+            connector_secret.into(),
             &ephemeral_bytes,
             Arc::new(LnLogger::new()),
             Arc::new(IgnoringMessageHandler {}),

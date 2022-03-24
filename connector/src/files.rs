@@ -11,15 +11,17 @@ use std::{
     path::{Path, PathBuf},
     process,
 };
-use uuid::Uuid;
 
-use super::identifier::ConnectorIdentifier;
+use crate::primitives::*;
 
 const CONNECTOR_SEED_FILE: &str = "seed";
 const UUID_FILE_NAME: &str = "connector-id";
 const NODE_PUBKEY_FILE_NAME: &str = "node-pubkey";
 
-pub fn init(path: PathBuf, pubkey: &PublicKey) -> anyhow::Result<ConnectorIdentifier> {
+pub fn init(
+    path: PathBuf,
+    node_id: &MonitoredNodeId,
+) -> anyhow::Result<(ConnectorId, ConnectorPubKey, ConnectorSecret)> {
     fs::create_dir_all(&path).context("failed to create data dir")?;
     fs::write(format!("{}/pid", path.display()), process::id().to_string())?;
 
@@ -36,22 +38,18 @@ pub fn init(path: PathBuf, pubkey: &PublicKey) -> anyhow::Result<ConnectorIdenti
 
     let node_pubkey_file_name = format!("{}/{}", path.display(), NODE_PUBKEY_FILE_NAME);
     if Path::new(&node_pubkey_file_name).exists() {
-        if pubkey
+        if node_id
             != &fs::read_to_string(&node_pubkey_file_name)
                 .context("failed to read node pubkey")?
-                .parse::<PublicKey>()
+                .parse::<MonitoredNodeId>()
                 .context("failed to parse node pubkey")?
         {
             anyhow::bail!("node pubkey does not match")
         }
     } else {
-        fs::write(node_pubkey_file_name, pubkey.to_string())?;
+        fs::write(node_pubkey_file_name, node_id.to_string())?;
     }
-    Ok(ConnectorIdentifier {
-        uuid,
-        public_key: connector_pubkey,
-        secret_key,
-    })
+    Ok((uuid.into(), connector_pubkey.into(), secret_key.into()))
 }
 
 fn init_node_secret<C: Signing>(

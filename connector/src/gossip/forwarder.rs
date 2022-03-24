@@ -29,7 +29,7 @@ impl RoutingMessageForwarder {
 impl RoutingMessageHandler for RoutingMessageForwarder {
     fn handle_node_announcement(&self, msg: &NodeAnnouncement) -> Result<bool, LightningError> {
         self.forward_message(GossipMessage::NodeAnnouncement {
-            pubkey: msg.contents.node_id,
+            node_id: msg.contents.node_id.into(),
         });
         Ok(false)
     }

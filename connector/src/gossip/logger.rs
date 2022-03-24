@@ -11,9 +11,9 @@ impl LnLogger {
 impl Logger for LnLogger {
     fn log(&self, record: &Record<'_>) {
         if record.level == Level::Error {
-            eprintln!("{}", record.args);
+            eprintln!("Gossip - '{}'", record.args);
         } else {
-            println!("{}", record.args);
+            println!("Gossip - '{}'", record.args);
         }
     }
 }

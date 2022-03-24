@@ -3,7 +3,6 @@ mod proto {
     tonic::include_proto!("connector");
 }
 
-use bitcoin::secp256k1::PublicKey;
 use futures::Stream;
 use std::{collections::HashMap, pin::Pin, sync::Arc};
 use tokio::sync::{mpsc, RwLock};
@@ -15,7 +14,7 @@ use crate::{
     config::{self, ServerConfig},
     gossip::GossipMessage,
     node_client::NodeClient,
-    update::ConnectorUpdate,
+    primitives::*,
 };
 use proto::{
     lnctl_connector_server::{LnctlConnector, LnctlConnectorServer},
@@ -26,28 +25,28 @@ type ConnectorResponse<T> = Result<Response<T>, Status>;
 type ResponseStream = Pin<Box<dyn Stream<Item = Result<NodeEvent, Status>> + Send>>;
 
 struct ConnectorServer {
-    uuid: Uuid,
-    node_pubkey: PublicKey,
+    connector_id: ConnectorId,
+    node_pubkey: MonitoredNodeId,
     node_client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
     node_event_clients: Arc<RwLock<HashMap<Uuid, mpsc::Sender<NodeEvent>>>>,
 }
 
 impl ConnectorServer {
     pub fn new(
-        uuid: Uuid,
-        node_pubkey: PublicKey,
+        connector_id: ConnectorId,
+        node_pubkey: MonitoredNodeId,
         gossip_receiver: mpsc::Receiver<GossipMessage>,
         node_client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
     ) -> Self {
         let node_event_clients = Arc::new(RwLock::new(HashMap::new()));
         Self::spawn_fanout_updates(
-            uuid,
+            connector_id,
             node_pubkey,
             gossip_receiver,
             Arc::clone(&node_event_clients),
         );
         Self {
-            uuid,
+            connector_id,
             node_pubkey,
             node_event_clients,
             node_client,
@@ -55,15 +54,15 @@ impl ConnectorServer {
     }
 
     pub fn spawn_fanout_updates(
-        uuid: Uuid,
-        node_pubkey: PublicKey,
+        connector_id: ConnectorId,
+        node_pubkey: MonitoredNodeId,
         mut gossip_receiver: mpsc::Receiver<GossipMessage>,
         clients: Arc<RwLock<HashMap<Uuid, mpsc::Sender<NodeEvent>>>>,
     ) {
         tokio::spawn(async move {
             while let Some(item) = gossip_receiver.recv().await {
                 println!("Forwarding gossip message {:?}", item);
-                let event = NodeEvent::from((uuid, node_pubkey, item));
+                let event = NodeEvent::from((connector_id, node_pubkey, item));
                 let mut remove_clients = Vec::new();
                 {
                     let clients = clients.read().await;
@@ -93,7 +92,7 @@ impl LnctlConnector for ConnectorServer {
         let client = self.node_client.write().await;
 
         Ok(Response::new(GetStatusResponse {
-            connector_id: self.uuid.to_string(),
+            connector_id: self.connector_id.to_string(),
             node_pubkey: self.node_pubkey.to_string(),
             r#type: proto::ConnectorType::from(client.node_type()) as i32,
         }))
@@ -117,16 +116,16 @@ impl LnctlConnector for ConnectorServer {
 
 pub async fn run_server(
     config: ServerConfig,
-    uuid: Uuid,
-    node_pubkey: PublicKey,
+    connector_id: ConnectorId,
+    node_pubkey: MonitoredNodeId,
     receiver: mpsc::Receiver<GossipMessage>,
     node_client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
 ) -> anyhow::Result<()> {
-    println!("Connector {} - monitoring {}", uuid, node_pubkey);
+    println!("Connector {} - monitoring {}", connector_id, node_pubkey);
     println!("Listening on port {}", config.port);
     Server::builder()
         .add_service(LnctlConnectorServer::new(ConnectorServer::new(
-            uuid,
+            connector_id,
             node_pubkey,
             receiver,
             node_client,

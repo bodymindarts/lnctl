@@ -1,6 +1,6 @@
-use bitcoin::secp256k1::PublicKey;
+use crate::primitives::NodeId;
 
 #[derive(Debug)]
 pub enum GossipMessage {
-    NodeAnnouncement { pubkey: PublicKey },
+    NodeAnnouncement { node_id: NodeId },
 }

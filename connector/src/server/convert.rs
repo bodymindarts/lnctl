@@ -1,20 +1,20 @@
 use super::proto::*;
-use crate::{gossip::GossipMessage, node_client::NodeType};
-use bitcoin::secp256k1::PublicKey;
-use uuid::Uuid;
+use crate::{gossip::GossipMessage, node_client::NodeType, primitives::*};
 
-impl From<(Uuid, PublicKey, GossipMessage)> for NodeEvent {
-    fn from((uuid, node_pubkey, msg): (Uuid, PublicKey, GossipMessage)) -> Self {
+impl From<(ConnectorId, MonitoredNodeId, GossipMessage)> for NodeEvent {
+    fn from(
+        (connector_id, monitored_node_id, msg): (ConnectorId, MonitoredNodeId, GossipMessage),
+    ) -> Self {
         let ln_gossip = match msg {
-            GossipMessage::NodeAnnouncement { pubkey } => LnGossip {
+            GossipMessage::NodeAnnouncement { node_id } => LnGossip {
                 message: Some(ln_gossip::Message::NodeAnnouncement(NodeAnnouncement {
-                    announced_pubkey: pubkey.to_string(),
+                    node_id: node_id.to_string(),
                 })),
             },
         };
         NodeEvent {
-            connector_id: uuid.to_string(),
-            node_pubkey: node_pubkey.to_string(),
+            connector_id: connector_id.to_string(),
+            monitored_node_id: monitored_node_id.to_string(),
             event: Some(node_event::Event::Gossip(ln_gossip)),
         }
     }
