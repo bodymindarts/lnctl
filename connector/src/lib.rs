@@ -9,10 +9,12 @@ mod update;
 pub mod node_client;
 
 use anyhow::Context;
-pub use config::ConnectorConfig;
-use node_client::NodeClient;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+
+pub use config::ConnectorConfig;
+use gossip::Gossip;
+use node_client::NodeClient;
 
 pub async fn run(config: ConnectorConfig) -> anyhow::Result<()> {
     println!("Starting connector...");
@@ -22,7 +24,9 @@ pub async fn run(config: ConnectorConfig) -> anyhow::Result<()> {
         _ => anyhow::bail!("Connector type not supported"),
     };
     let node_pubkey = client.node_pubkey().await?;
-    let uuid = files::init(config.data_dir, &node_pubkey).context("creating cache files")?;
+    let (connector_secret, uuid) =
+        files::init(config.data_dir, &node_pubkey).context("creating cache files")?;
+    let _receiver = Gossip::listen(config.gossip.port, connector_secret);
     server::run_server(
         config.server,
         uuid,

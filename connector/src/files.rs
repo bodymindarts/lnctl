@@ -1,7 +1,7 @@
 use anyhow::Context;
 use bitcoin::{
     network::constants::Network,
-    secp256k1::{PublicKey, Secp256k1, SecretKey},
+    secp256k1::{PublicKey, Secp256k1, SecretKey, Signing},
     util::bip32::{ChildNumber, ExtendedPrivKey},
 };
 use rand::{thread_rng, Rng};
@@ -17,24 +17,20 @@ const CONNECTOR_SEED_FILE: &str = "seed";
 const UUID_FILE_NAME: &str = "connector-id";
 const NODE_PUBKEY_FILE_NAME: &str = "node-pubkey";
 
-pub fn init(path: PathBuf, pubkey: &PublicKey) -> anyhow::Result<Uuid> {
+pub fn init(path: PathBuf, pubkey: &PublicKey) -> anyhow::Result<(SecretKey, Uuid)> {
     fs::create_dir_all(&path).context("failed to create data dir")?;
     fs::write(format!("{}/pid", path.display()), process::id().to_string())?;
 
+    let secp_ctx = Secp256k1::new();
+    let secret_key = init_node_secret(&path, &secp_ctx)?;
+    let node_pubkey = PublicKey::from_secret_key(&secp_ctx, &secret_key);
+    let uuid = uuid::Builder::from_slice(&node_pubkey.serialize()[0..16])?
+        .set_variant(uuid::Variant::RFC4122)
+        .set_version(uuid::Version::Random)
+        .build();
+
     let uuid_file_name = format!("{}/{}", path.display(), UUID_FILE_NAME);
-    let uuid = if let Ok(content) = fs::read_to_string(&uuid_file_name) {
-        if let Ok(uuid) = Uuid::parse_str(&content).context("Couldn't parse uuid") {
-            uuid
-        } else {
-            let uuid = Uuid::new_v4();
-            fs::write(uuid_file_name, uuid.to_string()).context("couldn't write uuid file")?;
-            uuid
-        }
-    } else {
-        let uuid = Uuid::new_v4();
-        fs::write(uuid_file_name, uuid.to_string()).context("couldn't write uuid file")?;
-        uuid
-    };
+    fs::write(uuid_file_name, uuid.to_string()).context("couldn't write uuid file")?;
 
     let node_pubkey_file_name = format!("{}/{}", path.display(), NODE_PUBKEY_FILE_NAME);
     if Path::new(&node_pubkey_file_name).exists() {
@@ -49,10 +45,13 @@ pub fn init(path: PathBuf, pubkey: &PublicKey) -> anyhow::Result<Uuid> {
     } else {
         fs::write(node_pubkey_file_name, pubkey.to_string())?;
     }
-    Ok(uuid)
+    Ok((secret_key, uuid))
 }
 
-fn init_node_secret(path: PathBuf) -> anyhow::Result<SecretKey> {
+fn init_node_secret<C: Signing>(
+    path: &PathBuf,
+    secp_ctx: &Secp256k1<C>,
+) -> anyhow::Result<SecretKey> {
     let keys_seed_path = format!("{}/{}", path.display(), CONNECTOR_SEED_FILE);
     let keys_seed = if let Ok(seed) = fs::read(keys_seed_path.clone()) {
         assert_eq!(seed.len(), 32);
@@ -78,8 +77,6 @@ fn init_node_secret(path: PathBuf) -> anyhow::Result<SecretKey> {
         }
         key
     };
-
-    let secp_ctx = Secp256k1::new();
     // Note that when we aren't serializing the key, network doesn't matter
     match ExtendedPrivKey::new_master(Network::Testnet, &keys_seed) {
         Ok(master_key) => Ok(master_key

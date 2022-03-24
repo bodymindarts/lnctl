@@ -3,33 +3,48 @@ use lightning::{
     ln::msgs::*,
     util::events::{MessageSendEvent, MessageSendEventsProvider},
 };
+use tokio::sync::mpsc;
 
-pub struct RoutingMessageForwarder {}
+use super::message::GossipMessage;
+
+pub struct RoutingMessageForwarder {
+    sender: mpsc::Sender<GossipMessage>,
+}
 
 impl RoutingMessageForwarder {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(sender: mpsc::Sender<GossipMessage>) -> Self {
+        Self { sender }
+    }
+
+    fn forward_message(&self, msg: GossipMessage) {
+        let sender = self.sender.clone();
+        tokio::spawn(async move {
+            if let Err(e) = sender.send(msg).await {
+                eprintln!("Error forawding msg: {}", e);
+            }
+        });
     }
 }
 
 impl RoutingMessageHandler for RoutingMessageForwarder {
-    fn handle_node_announcement(&self, msg: &NodeAnnouncement) -> Result<bool, LightningError> {
+    fn handle_node_announcement(&self, _msg: &NodeAnnouncement) -> Result<bool, LightningError> {
+        self.forward_message(GossipMessage::NodeAnnouncement {});
         Ok(false)
     }
     fn handle_channel_announcement(
         &self,
-        msg: &ChannelAnnouncement,
+        _msg: &ChannelAnnouncement,
     ) -> Result<bool, LightningError> {
         Ok(false)
     }
-    fn handle_channel_update(&self, msg: &ChannelUpdate) -> Result<bool, LightningError> {
+    fn handle_channel_update(&self, _msg: &ChannelUpdate) -> Result<bool, LightningError> {
         Ok(false)
     }
 
     fn get_next_channel_announcements(
         &self,
-        starting_point: u64,
-        batch_amount: u8,
+        _starting_point: u64,
+        _batch_amount: u8,
     ) -> Vec<(
         ChannelAnnouncement,
         Option<ChannelUpdate>,
@@ -39,38 +54,38 @@ impl RoutingMessageHandler for RoutingMessageForwarder {
     }
     fn get_next_node_announcements(
         &self,
-        starting_point: Option<&PublicKey>,
-        batch_amount: u8,
+        _starting_point: Option<&PublicKey>,
+        _batch_amount: u8,
     ) -> Vec<NodeAnnouncement> {
         Vec::new()
     }
-    fn sync_routing_table(&self, their_node_id: &PublicKey, init: &Init) {}
+    fn sync_routing_table(&self, _their_node_id: &PublicKey, _init: &Init) {}
 
     fn handle_reply_channel_range(
         &self,
-        their_node_id: &PublicKey,
-        msg: ReplyChannelRange,
+        _their_node_id: &PublicKey,
+        _msg: ReplyChannelRange,
     ) -> Result<(), LightningError> {
         Ok(())
     }
     fn handle_reply_short_channel_ids_end(
         &self,
-        their_node_id: &PublicKey,
-        msg: ReplyShortChannelIdsEnd,
+        _their_node_id: &PublicKey,
+        _msg: ReplyShortChannelIdsEnd,
     ) -> Result<(), LightningError> {
         Ok(())
     }
     fn handle_query_channel_range(
         &self,
-        their_node_id: &PublicKey,
-        msg: QueryChannelRange,
+        _their_node_id: &PublicKey,
+        _msg: QueryChannelRange,
     ) -> Result<(), LightningError> {
         Ok(())
     }
     fn handle_query_short_channel_ids(
         &self,
-        their_node_id: &PublicKey,
-        msg: QueryShortChannelIds,
+        _their_node_id: &PublicKey,
+        _msg: QueryShortChannelIds,
     ) -> Result<(), LightningError> {
         Ok(())
     }
@@ -79,11 +94,5 @@ impl RoutingMessageHandler for RoutingMessageForwarder {
 impl MessageSendEventsProvider for RoutingMessageForwarder {
     fn get_and_clear_pending_msg_events(&self) -> Vec<MessageSendEvent> {
         return Vec::new();
-    }
-}
-impl std::ops::Deref for RoutingMessageForwarder {
-    type Target = RoutingMessageForwarder;
-    fn deref(&self) -> &Self {
-        self
     }
 }

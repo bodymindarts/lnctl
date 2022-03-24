@@ -1,10 +1,11 @@
 use lightning::util::logger::*;
-use std::sync::Arc;
 
 pub struct LnLogger {}
 
-pub fn init_logger() -> Arc<LnLogger> {
-    Arc::new(LnLogger {})
+impl LnLogger {
+    pub fn new() -> Self {
+        Self {}
+    }
 }
 
 impl Logger for LnLogger {
