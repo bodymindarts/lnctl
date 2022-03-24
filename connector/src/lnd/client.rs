@@ -4,7 +4,10 @@ use std::str::FromStr;
 use tonic_lnd::{rpc::*, Client as InnerClient};
 
 use super::config::LndConnectorConfig;
-use crate::{node_client::*, primitives::MonitoredNodeId};
+use crate::{
+    node_client::{self, NodeClient, NodeType},
+    primitives::MonitoredNodeId,
+};
 
 pub struct LndClient {
     inner: InnerClient,
@@ -29,9 +32,27 @@ impl NodeClient for LndClient {
         NodeType::Lnd
     }
 
-    async fn node_pubkey(&mut self) -> anyhow::Result<MonitoredNodeId> {
+    async fn node_info(&mut self) -> anyhow::Result<node_client::NodeInfo> {
         let response = self.inner.get_info(GetInfoRequest {}).await?;
-        Ok(PublicKey::from_str(&response.into_inner().identity_pubkey)?.into())
+        let GetInfoResponse {
+            identity_pubkey,
+            chains,
+            ..
+        } = response.into_inner();
+        let network = match chains.first() {
+            Some(chain) => match chain.network.as_ref() {
+                "mainnet" => bitcoin::Network::Bitcoin,
+                "testnet" => bitcoin::Network::Testnet,
+                "regtest" => bitcoin::Network::Regtest,
+                _ => bitcoin::Network::Bitcoin,
+            },
+            None => bitcoin::Network::Bitcoin,
+        };
+
+        Ok(node_client::NodeInfo {
+            node_id: MonitoredNodeId::from_str(&identity_pubkey)?,
+            network,
+        })
     }
 
     async fn connect_to_peer(

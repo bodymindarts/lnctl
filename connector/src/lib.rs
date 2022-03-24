@@ -24,10 +24,10 @@ pub async fn run(config: ConnectorConfig) -> anyhow::Result<()> {
         _ => anyhow::bail!("Connector type not supported"),
     };
 
-    let node_pubkey = client.node_pubkey().await?;
+    let node_info = client.node_info().await?;
     let (connector_id, connector_pubkey, connector_secret_key) =
-        files::init(config.data_dir, &node_pubkey).context("creating cache files")?;
-    let receiver = Gossip::listen(config.gossip.port, connector_secret_key);
+        files::init(config.data_dir, &node_info.node_id).context("creating cache files")?;
+    let receiver = Gossip::listen(config.gossip.port, node_info.network, connector_secret_key);
 
     let _ = client
         .connect_to_peer(
@@ -39,7 +39,7 @@ pub async fn run(config: ConnectorConfig) -> anyhow::Result<()> {
     server::run_server(
         config.server,
         connector_id,
-        node_pubkey,
+        node_info.node_id,
         receiver,
         Arc::new(RwLock::new(client)),
     )

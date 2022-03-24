@@ -9,13 +9,15 @@ use tokio::sync::mpsc;
 use super::message::GossipMessage;
 
 pub struct RoutingMessageForwarder {
+    bitcoin_network: bitcoin::Network,
     sender: mpsc::Sender<GossipMessage>,
     pending_events: Mutex<Vec<MessageSendEvent>>,
 }
 
 impl RoutingMessageForwarder {
-    pub fn new(sender: mpsc::Sender<GossipMessage>) -> Self {
+    pub fn new(bitcoin_network: bitcoin::Network, sender: mpsc::Sender<GossipMessage>) -> Self {
         Self {
+            bitcoin_network,
             sender,
             pending_events: Mutex::new(Vec::new()),
         }
@@ -38,16 +40,32 @@ impl RoutingMessageHandler for RoutingMessageForwarder {
         });
         Ok(false)
     }
+
     fn handle_channel_announcement(
         &self,
         msg: &ChannelAnnouncement,
     ) -> Result<bool, LightningError> {
-        self.forward_message(GossipMessage::NodeAnnouncement {
-            node_id: msg.contents.node_id_1.into(),
+        self.forward_message(GossipMessage::ChannelAnnouncement {
+            short_channel_id: msg.contents.short_channel_id,
+            node_a_id: msg.contents.node_id_1.into(),
+            node_b_id: msg.contents.node_id_2.into(),
         });
         Ok(false)
     }
-    fn handle_channel_update(&self, _msg: &ChannelUpdate) -> Result<bool, LightningError> {
+
+    fn handle_channel_update(&self, msg: &ChannelUpdate) -> Result<bool, LightningError> {
+        self.forward_message(GossipMessage::ChannelUpdate {
+            short_channel_id: msg.contents.short_channel_id,
+            timestamp: msg.contents.timestamp,
+            cltv_expiry_delta: msg.contents.cltv_expiry_delta,
+            htlc_minimum_msat: msg.contents.htlc_minimum_msat.into(),
+            htlc_maximum_msat: match msg.contents.htlc_maximum_msat {
+                OptionalField::Present(msats) => Some(msats.into()),
+                OptionalField::Absent => None,
+            },
+            fee_base_msat: msg.contents.fee_base_msat.into(),
+            fee_proportional_millionths: msg.contents.fee_proportional_millionths,
+        });
         Ok(false)
     }
 
@@ -86,7 +104,7 @@ impl RoutingMessageHandler for RoutingMessageForwarder {
         pending_events.push(MessageSendEvent::SendGossipTimestampFilter {
             node_id: their_node_id.clone(),
             msg: GossipTimestampFilter {
-                chain_hash: constants::genesis_block(bitcoin::Network::Bitcoin).block_hash(),
+                chain_hash: constants::genesis_block(self.bitcoin_network).block_hash(),
                 first_timestamp: 0,
                 timestamp_range: u32::max_value(),
             },

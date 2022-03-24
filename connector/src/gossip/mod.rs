@@ -28,12 +28,16 @@ pub struct Gossip {}
 impl Gossip {
     pub fn listen(
         listen_port: u16,
+        bitcoin_network: bitcoin::Network,
         connector_secret: ConnectorSecret,
     ) -> mpsc::Receiver<GossipMessage> {
         let (send, receive) = mpsc::channel(50);
         let msg_handler = MessageHandler {
             chan_handler: Arc::new(ErroringMessageHandler::new()),
-            route_handler: Arc::new(forwarder::RoutingMessageForwarder::new(send)),
+            route_handler: Arc::new(forwarder::RoutingMessageForwarder::new(
+                bitcoin_network,
+                send,
+            )),
         };
         let mut ephemeral_bytes = [0; 32];
         rand::thread_rng().fill_bytes(&mut ephemeral_bytes);

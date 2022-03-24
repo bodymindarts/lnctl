@@ -26,8 +26,24 @@ message NodeEvent {
 message LnGossip {
   oneof message {
     NodeAnnouncement node_announcement = 1;
+    ChannelAnnouncement channel_announcement = 2;
+    ChannelUpdate channel_update = 3;
   }
 }
 message NodeAnnouncement {
   string node_id = 1;
+}
+message ChannelAnnouncement {
+  uint64 short_channel_id = 1;
+  string node_a_id = 2;
+  string node_b_id = 3;
+}
+message ChannelUpdate {
+  uint64 short_channel_id = 1;
+  uint32 timestamp = 2;
+  uint32 cltv_expiry_delta = 3;
+  uint64 htlc_minimum_msat = 4;
+  optional uint64 htlc_maximum_msat = 5;
+  uint64 fee_base_msat = 6;
+  uint32 fee_proportional_millionths = 7;
 }

@@ -40,12 +40,18 @@ wrapper! { ConnectorId, Uuid }
 wrapper! { ConnectorSecret, SecretKey }
 wrapper! { ConnectorPubKey, PublicKey }
 wrapper! { MonitoredNodeId, PublicKey }
-wrapper! { NodeId, PublicKey }
-
 impl FromStr for MonitoredNodeId {
     type Err = <PublicKey as FromStr>::Err;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Self(s.parse::<PublicKey>()?))
+    }
+}
+
+wrapper! { NodeId, PublicKey }
+wrapper! { MilliSatoshi, u64 }
+impl From<u32> for MilliSatoshi {
+    fn from(v: u32) -> Self {
+        Self(v as u64)
     }
 }
