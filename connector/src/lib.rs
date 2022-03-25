@@ -26,10 +26,11 @@ pub async fn run(config: ConnectorConfig) -> anyhow::Result<()> {
     };
 
     let node_info = client.node_info().await?;
+    let db = db::Db::new(&config.data_dir)?;
     let (connector_id, connector_pubkey, connector_secret_key) =
         files::init(config.data_dir, &node_info.node_id).context("creating cache files")?;
     let receiver = Gossip::listen(config.gossip.port, node_info.network, connector_secret_key);
-
+    let receiver = db.forward_gossip(receiver);
     let _ = client
         .connect_to_peer(
             connector_pubkey.into(),

@@ -6,8 +6,30 @@ table NodeAnnouncement{
   node_id:PubKey;
 }
 
+table ChannelAnnouncement {
+  short_channel_id:uint64;
+  node_a_id:PubKey;
+  node_b_id:PubKey;
+}
+
+enum ChannelDirection:uint8 { AToB, BToA }
+
+table ChannelUpdate {
+  short_channel_id:uint64;
+  update_counter:uint32;
+  channel_enabled:bool;
+  direction:ChannelDirection;
+  cltv_expiry_delta:uint16;
+  htlc_minimum_msat:uint64;
+  htlc_maximum_msat:uint64;
+  fee_base_msat:uint64;
+  fee_proportional_millionths:uint32;
+}
+
 union Message {
-  NodeAnnouncement:NodeAnnouncement
+  NodeAnnouncement,
+  ChannelAnnouncement,
+  ChannelUpdate
 }
 
 table GossipRecord {

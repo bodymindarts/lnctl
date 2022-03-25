@@ -1,6 +1,6 @@
 use crate::primitives::{MilliSatoshi, NodeId, UnixTimestampSecs};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum ChannelDirection {
     AToB,
     BToA,
