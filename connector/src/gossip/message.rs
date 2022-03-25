@@ -1,6 +1,12 @@
 use crate::primitives::{MilliSatoshi, NodeId};
 
 #[derive(Debug)]
+pub enum ChannelDirection {
+    AToB,
+    BToA,
+}
+
+#[derive(Debug)]
 pub enum GossipMessage {
     NodeAnnouncement {
         node_id: NodeId,
@@ -12,7 +18,9 @@ pub enum GossipMessage {
     },
     ChannelUpdate {
         short_channel_id: u64,
-        timestamp: u32,
+        update_counter: u32,
+        channel_enabled: bool,
+        direction: ChannelDirection,
         cltv_expiry_delta: u16,
         htlc_minimum_msat: MilliSatoshi,
         htlc_maximum_msat: Option<MilliSatoshi>,

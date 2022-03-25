@@ -40,10 +40,16 @@ message ChannelAnnouncement {
 }
 message ChannelUpdate {
   uint64 short_channel_id = 1;
-  uint32 timestamp = 2;
-  uint32 cltv_expiry_delta = 3;
-  uint64 htlc_minimum_msat = 4;
-  optional uint64 htlc_maximum_msat = 5;
-  uint64 fee_base_msat = 6;
-  uint32 fee_proportional_millionths = 7;
+  uint32 update_counter = 2;
+  Direction channel_direction = 3;
+  bool channel_enabled = 4;
+  uint32 cltv_expiry_delta = 5;
+  uint64 htlc_minimum_msat = 6;
+  optional uint64 htlc_maximum_msat = 7;
+  uint64 fee_base_msat = 8;
+  uint32 fee_proportional_millionths = 9;
+}
+enum Direction {
+  A_TO_B = 0;
+  B_TO_A = 1;
 }

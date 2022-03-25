@@ -6,7 +6,7 @@ use lightning::{
 use std::sync::Mutex;
 use tokio::sync::mpsc;
 
-use super::message::GossipMessage;
+use super::message::*;
 
 pub struct RoutingMessageForwarder {
     bitcoin_network: bitcoin::Network,
@@ -54,14 +54,25 @@ impl RoutingMessageHandler for RoutingMessageForwarder {
     }
 
     fn handle_channel_update(&self, msg: &ChannelUpdate) -> Result<bool, LightningError> {
+        let channel_enabled = msg.contents.flags & (1 << 1) != (1 << 1);
+        let direction = if msg.contents.flags & 1 == 1 {
+            ChannelDirection::BToA
+        } else {
+            ChannelDirection::AToB
+        };
+
         self.forward_message(GossipMessage::ChannelUpdate {
             short_channel_id: msg.contents.short_channel_id,
-            timestamp: msg.contents.timestamp,
+            update_counter: msg.contents.timestamp,
+            channel_enabled,
+            direction,
             cltv_expiry_delta: msg.contents.cltv_expiry_delta,
             htlc_minimum_msat: msg.contents.htlc_minimum_msat.into(),
-            htlc_maximum_msat: match msg.contents.htlc_maximum_msat {
-                OptionalField::Present(msats) => Some(msats.into()),
-                OptionalField::Absent => None,
+            htlc_maximum_msat: if let OptionalField::Present(msats) = msg.contents.htlc_maximum_msat
+            {
+                Some(msats.into())
+            } else {
+                None
             },
             fee_base_msat: msg.contents.fee_base_msat.into(),
             fee_proportional_millionths: msg.contents.fee_proportional_millionths,

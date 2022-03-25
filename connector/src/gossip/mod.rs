@@ -13,7 +13,7 @@ use tokio::sync::mpsc;
 use crate::primitives::ConnectorSecret;
 use forwarder::RoutingMessageForwarder;
 use logger::LnLogger;
-pub use message::GossipMessage;
+pub use message::*;
 
 pub(crate) type LnPeers = PeerManager<
     SocketDescriptor,

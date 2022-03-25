@@ -1,5 +1,5 @@
 use super::proto::*;
-use crate::{gossip::GossipMessage, node_client::NodeType};
+use crate::{gossip::*, node_client::NodeType};
 
 impl From<GossipMessage> for NodeEvent {
     fn from(msg: GossipMessage) -> Self {
@@ -24,7 +24,9 @@ impl From<GossipMessage> for NodeEvent {
             },
             GossipMessage::ChannelUpdate {
                 short_channel_id,
-                timestamp,
+                update_counter,
+                direction,
+                channel_enabled,
                 cltv_expiry_delta,
                 htlc_minimum_msat,
                 htlc_maximum_msat,
@@ -33,7 +35,9 @@ impl From<GossipMessage> for NodeEvent {
             } => LnGossip {
                 message: Some(ln_gossip::Message::ChannelUpdate(ChannelUpdate {
                     short_channel_id,
-                    timestamp,
+                    update_counter,
+                    channel_direction: Direction::from(direction) as i32,
+                    channel_enabled,
                     cltv_expiry_delta: cltv_expiry_delta as u32,
                     htlc_minimum_msat: htlc_minimum_msat.into(),
                     htlc_maximum_msat: htlc_maximum_msat.map(u64::from),
@@ -52,6 +56,15 @@ impl From<NodeType> for ConnectorType {
     fn from(node_type: NodeType) -> Self {
         match node_type {
             NodeType::Lnd => ConnectorType::Lnd,
+        }
+    }
+}
+
+impl From<ChannelDirection> for Direction {
+    fn from(direction: ChannelDirection) -> Self {
+        match direction {
+            ChannelDirection::AToB => Direction::AToB,
+            ChannelDirection::BToA => Direction::BToA,
         }
     }
 }
