@@ -15,7 +15,7 @@ use convert::FinishedBytes;
 use keys::GossipMessageKey;
 
 pub struct Db {
-    inner: sled::Db,
+    _inner: sled::Db,
     gossip: sled::Tree,
 }
 
@@ -23,7 +23,7 @@ impl Db {
     pub fn new(data_dir: &PathBuf) -> anyhow::Result<Self> {
         let db: sled::Db = sled::open(format!("{}/sled", data_dir.display()))?;
         let gossip = db.open_tree("gossip")?;
-        Ok(Self { inner: db, gossip })
+        Ok(Self { _inner: db, gossip })
     }
 
     pub fn forward_gossip(
