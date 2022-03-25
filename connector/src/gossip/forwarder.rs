@@ -7,6 +7,7 @@ use std::sync::Mutex;
 use tokio::sync::mpsc;
 
 use super::message::*;
+use crate::primitives::UnixTimestampSecs;
 
 pub struct RoutingMessageForwarder {
     bitcoin_network: bitcoin::Network,
@@ -35,8 +36,11 @@ impl RoutingMessageForwarder {
 
 impl RoutingMessageHandler for RoutingMessageForwarder {
     fn handle_node_announcement(&self, msg: &NodeAnnouncement) -> Result<bool, LightningError> {
-        self.forward_message(GossipMessage::NodeAnnouncement {
-            node_id: msg.contents.node_id.into(),
+        self.forward_message(GossipMessage {
+            received_at: UnixTimestampSecs::now(),
+            msg: Message::NodeAnnouncement {
+                node_id: msg.contents.node_id.into(),
+            },
         });
         Ok(false)
     }
@@ -45,10 +49,13 @@ impl RoutingMessageHandler for RoutingMessageForwarder {
         &self,
         msg: &ChannelAnnouncement,
     ) -> Result<bool, LightningError> {
-        self.forward_message(GossipMessage::ChannelAnnouncement {
-            short_channel_id: msg.contents.short_channel_id,
-            node_a_id: msg.contents.node_id_1.into(),
-            node_b_id: msg.contents.node_id_2.into(),
+        self.forward_message(GossipMessage {
+            received_at: UnixTimestampSecs::now(),
+            msg: Message::ChannelAnnouncement {
+                short_channel_id: msg.contents.short_channel_id,
+                node_a_id: msg.contents.node_id_1.into(),
+                node_b_id: msg.contents.node_id_2.into(),
+            },
         });
         Ok(false)
     }
@@ -61,21 +68,25 @@ impl RoutingMessageHandler for RoutingMessageForwarder {
             ChannelDirection::AToB
         };
 
-        self.forward_message(GossipMessage::ChannelUpdate {
-            short_channel_id: msg.contents.short_channel_id,
-            update_counter: msg.contents.timestamp,
-            channel_enabled,
-            direction,
-            cltv_expiry_delta: msg.contents.cltv_expiry_delta,
-            htlc_minimum_msat: msg.contents.htlc_minimum_msat.into(),
-            htlc_maximum_msat: if let OptionalField::Present(msats) = msg.contents.htlc_maximum_msat
-            {
-                Some(msats.into())
-            } else {
-                None
+        self.forward_message(GossipMessage {
+            received_at: UnixTimestampSecs::now(),
+            msg: Message::ChannelUpdate {
+                short_channel_id: msg.contents.short_channel_id,
+                update_counter: msg.contents.timestamp,
+                channel_enabled,
+                direction,
+                cltv_expiry_delta: msg.contents.cltv_expiry_delta,
+                htlc_minimum_msat: msg.contents.htlc_minimum_msat.into(),
+                htlc_maximum_msat: if let OptionalField::Present(msats) =
+                    msg.contents.htlc_maximum_msat
+                {
+                    Some(msats.into())
+                } else {
+                    None
+                },
+                fee_base_msat: msg.contents.fee_base_msat.into(),
+                fee_proportional_millionths: msg.contents.fee_proportional_millionths,
             },
-            fee_base_msat: msg.contents.fee_base_msat.into(),
-            fee_proportional_millionths: msg.contents.fee_proportional_millionths,
         });
         Ok(false)
     }

@@ -13,11 +13,13 @@ lnd = ["tonic_lnd"]
 
 anyhow = "1.0"
 bitcoin = { version = "0.27", features = ["use-serde"] }
+flatbuffers = "2.1"
 futures = { version = "0.3", default-features = false, features = ["alloc"] }
 lightning = { git = "https://github.com/lightningdevkit/rust-lightning" }
 lightning-net-tokio = { git = "https://github.com/lightningdevkit/rust-lightning" }
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
+sled = "0.34"
 tonic = { version = "0.6", features = ["tls", "transport"] }
 tonic_lnd = { version = "0.3", optional = true }
 uuid = { version = "0.8", features = ["v4"] }
@@ -25,6 +27,8 @@ prost = "0.9"
 rand = "0.4"
 tokio = { version = "1.5", features = [ "io-util", "macros", "rt", "rt-multi-thread", "sync", "net", "time" ] }
 tokio-stream = "0.1"
+zerocopy = "0.6.1"
 
 [build-dependencies]
 tonic-build = { version = "0.6" , features = ["prost"] }
+flatc-rust = "0.2"

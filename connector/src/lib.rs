@@ -1,4 +1,5 @@
 mod config;
+mod db;
 mod files;
 mod gossip;
 #[cfg(feature = "lnd")]

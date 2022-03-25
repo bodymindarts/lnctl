@@ -19,15 +19,17 @@ enum ConnectorType {
 
 message StreamNodeEventsRequest { }
 message NodeEvent {
+  uint64 recorded_at = 1;
   oneof event {
-    LnGossip gossip = 3;
+    LnGossip gossip = 2;
   }
 }
 message LnGossip {
+  uint64 received_at = 1;
   oneof message {
-    NodeAnnouncement node_announcement = 1;
-    ChannelAnnouncement channel_announcement = 2;
-    ChannelUpdate channel_update = 3;
+    NodeAnnouncement node_announcement = 2;
+    ChannelAnnouncement channel_announcement = 3;
+    ChannelUpdate channel_update = 4;
   }
 }
 message NodeAnnouncement {

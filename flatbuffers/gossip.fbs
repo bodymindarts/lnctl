@@ -1,0 +1,19 @@
+struct PubKey {
+  bytes:[byte:33];
+}
+
+table NodeAnnouncement{
+  node_id:PubKey;
+}
+
+union Message {
+  NodeAnnouncement:NodeAnnouncement
+}
+
+table GossipRecord {
+  received_at:uint64;
+
+  msg:Message;
+}
+
+root_type GossipRecord;

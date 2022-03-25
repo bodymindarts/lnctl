@@ -3,17 +3,19 @@ use crate::{gossip::*, node_client::NodeType};
 
 impl From<GossipMessage> for NodeEvent {
     fn from(msg: GossipMessage) -> Self {
-        let ln_gossip = match msg {
-            GossipMessage::NodeAnnouncement { node_id } => LnGossip {
+        let ln_gossip = match msg.msg {
+            Message::NodeAnnouncement { node_id } => LnGossip {
+                received_at: msg.received_at.into(),
                 message: Some(ln_gossip::Message::NodeAnnouncement(NodeAnnouncement {
                     node_id: node_id.to_string(),
                 })),
             },
-            GossipMessage::ChannelAnnouncement {
+            Message::ChannelAnnouncement {
                 short_channel_id,
                 node_a_id,
                 node_b_id,
             } => LnGossip {
+                received_at: msg.received_at.into(),
                 message: Some(ln_gossip::Message::ChannelAnnouncement(
                     ChannelAnnouncement {
                         short_channel_id,
@@ -22,7 +24,7 @@ impl From<GossipMessage> for NodeEvent {
                     },
                 )),
             },
-            GossipMessage::ChannelUpdate {
+            Message::ChannelUpdate {
                 short_channel_id,
                 update_counter,
                 direction,
@@ -33,6 +35,7 @@ impl From<GossipMessage> for NodeEvent {
                 fee_base_msat,
                 fee_proportional_millionths,
             } => LnGossip {
+                received_at: msg.received_at.into(),
                 message: Some(ln_gossip::Message::ChannelUpdate(ChannelUpdate {
                     short_channel_id,
                     update_counter,
@@ -47,6 +50,7 @@ impl From<GossipMessage> for NodeEvent {
             },
         };
         NodeEvent {
+            recorded_at: 0,
             event: Some(node_event::Event::Gossip(ln_gossip)),
         }
     }

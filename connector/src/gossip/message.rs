@@ -1,4 +1,4 @@
-use crate::primitives::{MilliSatoshi, NodeId};
+use crate::primitives::{MilliSatoshi, NodeId, UnixTimestampSecs};
 
 #[derive(Debug)]
 pub enum ChannelDirection {
@@ -7,7 +7,7 @@ pub enum ChannelDirection {
 }
 
 #[derive(Debug)]
-pub enum GossipMessage {
+pub enum Message {
     NodeAnnouncement {
         node_id: NodeId,
     },
@@ -27,4 +27,10 @@ pub enum GossipMessage {
         fee_base_msat: MilliSatoshi,
         fee_proportional_millionths: u32,
     },
+}
+
+#[derive(Debug)]
+pub struct GossipMessage {
+    pub received_at: UnixTimestampSecs,
+    pub msg: Message,
 }

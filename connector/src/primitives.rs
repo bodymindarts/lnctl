@@ -3,6 +3,7 @@ use std::{
     fmt::{self, Display},
     ops::Deref,
     str::FromStr,
+    time::SystemTime,
 };
 use uuid::Uuid;
 
@@ -36,6 +37,17 @@ macro_rules! wrapper {
     };
 }
 
+wrapper! { UnixTimestampSecs, u64 }
+impl UnixTimestampSecs {
+    pub fn now() -> Self {
+        Self(
+            SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+        )
+    }
+}
 wrapper! { ConnectorId, Uuid }
 wrapper! { ConnectorSecret, SecretKey }
 wrapper! { ConnectorPubKey, PublicKey }
