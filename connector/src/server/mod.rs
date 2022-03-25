@@ -1,5 +1,5 @@
 mod convert;
-mod proto {
+pub mod proto {
     tonic::include_proto!("connector");
 }
 
@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use crate::{
     config::{self, ServerConfig},
+    db::Db,
     gossip::GossipMessage,
     node_client::NodeClient,
     primitives::*,
@@ -29,6 +30,7 @@ struct ConnectorServer {
     monitored_node_id: MonitoredNodeId,
     node_client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
     node_event_clients: Arc<RwLock<HashMap<Uuid, mpsc::Sender<NodeEvent>>>>,
+    db: Db,
 }
 
 impl ConnectorServer {
@@ -37,6 +39,7 @@ impl ConnectorServer {
         node_pubkey: MonitoredNodeId,
         gossip_receiver: mpsc::Receiver<GossipMessage>,
         node_client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
+        db: Db,
     ) -> Self {
         let node_event_clients = Arc::new(RwLock::new(HashMap::new()));
         Self::spawn_fanout_updates(gossip_receiver, Arc::clone(&node_event_clients));
@@ -45,6 +48,7 @@ impl ConnectorServer {
             monitored_node_id: node_pubkey,
             node_event_clients,
             node_client,
+            db,
         }
     }
 
@@ -96,9 +100,23 @@ impl LnctlConnector for ConnectorServer {
         &self,
         _request: Request<StreamNodeEventsRequest>,
     ) -> ConnectorResponse<Self::StreamNodeEventsStream> {
+        let (tx, mut rec_gossip) = mpsc::channel(config::DEFAULT_CHANNEL_SIZE);
+        self.db.iter_gossip(tx);
         let (tx, rx) = mpsc::channel(config::DEFAULT_CHANNEL_SIZE);
         let mut clients = self.node_event_clients.write().await;
-        clients.insert(Uuid::new_v4(), tx);
+        clients.insert(Uuid::new_v4(), tx.clone());
+        tokio::spawn(async move {
+            while let Some(gossip) = rec_gossip.recv().await {
+                if let Err(e) = tx
+                    .send(proto::NodeEvent {
+                        event: Some(proto::node_event::Event::Gossip(gossip)),
+                    })
+                    .await
+                {
+                    eprintln!("Couldn't forward itered gossip: {}", e);
+                }
+            }
+        });
 
         let output_stream = ReceiverStream::new(rx).map(|update| Ok(update));
         Ok(Response::new(
@@ -113,6 +131,7 @@ pub async fn run_server(
     node_pubkey: MonitoredNodeId,
     receiver: mpsc::Receiver<GossipMessage>,
     node_client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
+    db: Db,
 ) -> anyhow::Result<()> {
     println!("Connector {} - monitoring {}", connector_id, node_pubkey);
     println!("Listening on port {}", config.port);
@@ -122,6 +141,7 @@ pub async fn run_server(
             node_pubkey,
             receiver,
             node_client,
+            db,
         )))
         .serve(([0, 0, 0, 0], config.port).into())
         .await?;

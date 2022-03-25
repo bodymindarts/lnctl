@@ -19,7 +19,6 @@ enum ConnectorType {
 
 message StreamNodeEventsRequest { }
 message NodeEvent {
-  uint64 recorded_at = 1;
   oneof event {
     LnGossip gossip = 2;
   }

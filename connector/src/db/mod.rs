@@ -9,6 +9,7 @@ use tokio::sync::mpsc;
 use zerocopy::*;
 
 use crate::gossip::GossipMessage;
+use crate::server::proto;
 use convert::FinishedBytes;
 
 pub struct Db {
@@ -46,6 +47,22 @@ impl Db {
             }
         });
         new_receiver
+    }
+
+    pub fn iter_gossip(&self, sender: mpsc::Sender<proto::LnGossip>) {
+        let mut iter = self.gossip.iter();
+        tokio::spawn(async move {
+            while let Some(Ok((_, value))) = iter.next() {
+                let bytes = value.as_ref();
+                if let Ok(record) = flat::root_as_gossip_record(bytes) {
+                    if let Some(msg) = Option::<proto::LnGossip>::from(record) {
+                        if let Err(e) = sender.send(msg).await {
+                            eprintln!("Couldn't send loaded gossip: {}", e);
+                        }
+                    }
+                }
+            }
+        });
     }
 }
 

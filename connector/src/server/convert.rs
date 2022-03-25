@@ -50,7 +50,6 @@ impl From<GossipMessage> for NodeEvent {
             },
         };
         NodeEvent {
-            recorded_at: 0,
             event: Some(node_event::Event::Gossip(ln_gossip)),
         }
     }

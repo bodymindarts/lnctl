@@ -44,6 +44,7 @@ pub async fn run(config: ConnectorConfig) -> anyhow::Result<()> {
         node_info.node_id,
         receiver,
         Arc::new(RwLock::new(client)),
+        db,
     )
     .await?;
     Ok(())
