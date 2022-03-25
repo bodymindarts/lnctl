@@ -1,6 +1,7 @@
 use super::flat;
 use crate::{
     gossip::{ChannelDirection, GossipMessage, Message},
+    primitives::hex_str,
     server::proto,
 };
 
@@ -69,7 +70,7 @@ impl<'a> From<(&'a mut flatbuffers::FlatBufferBuilder<'_>, &GossipMessage)> for 
                 fee_base_msat,
                 fee_proportional_millionths,
             } => {
-                let channel_announcement = flat::ChannelUpdate::create(
+                let channel_update = flat::ChannelUpdate::create(
                     builder,
                     &flat::ChannelUpdateArgs {
                         short_channel_id,
@@ -90,8 +91,8 @@ impl<'a> From<(&'a mut flatbuffers::FlatBufferBuilder<'_>, &GossipMessage)> for 
                     builder,
                     &flat::GossipRecordArgs {
                         received_at: msg.received_at.into(),
-                        msg_type: flat::Message::ChannelAnnouncement,
-                        msg: Some(channel_announcement.as_union_value()),
+                        msg_type: flat::Message::ChannelUpdate,
+                        msg: Some(channel_update.as_union_value()),
                     },
                 )
             }
@@ -99,15 +100,6 @@ impl<'a> From<(&'a mut flatbuffers::FlatBufferBuilder<'_>, &GossipMessage)> for 
         builder.finish(msg, None);
         FinishedBytes(builder.finished_data())
     }
-}
-
-#[inline]
-pub fn hex_str(value: &[u8]) -> String {
-    let mut res = String::with_capacity(64);
-    for v in value {
-        res += &format!("{:02x}", v);
-    }
-    res
 }
 
 impl<'a> From<flat::GossipRecord<'a>> for Option<proto::LnGossip> {

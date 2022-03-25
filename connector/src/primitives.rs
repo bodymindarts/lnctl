@@ -61,9 +61,25 @@ impl FromStr for MonitoredNodeId {
 }
 
 wrapper! { NodeId, PublicKey }
+impl FromStr for NodeId {
+    type Err = <PublicKey as FromStr>::Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self(s.parse::<PublicKey>()?))
+    }
+}
 wrapper! { MilliSatoshi, u64 }
 impl From<u32> for MilliSatoshi {
     fn from(v: u32) -> Self {
         Self(v as u64)
     }
+}
+
+#[inline]
+pub fn hex_str(value: &[u8]) -> String {
+    let mut res = String::with_capacity(64);
+    for v in value {
+        res += &format!("{:02x}", v);
+    }
+    res
 }
