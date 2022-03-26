@@ -259,18 +259,18 @@ impl<'a> flatbuffers::Verifiable for PubKey {
 impl<'a> PubKey {
   #[allow(clippy::too_many_arguments)]
   pub fn new(
-    bytes: &[i8; 33],
+    bytes: &[u8; 33],
   ) -> Self {
     let mut s = Self([0; 33]);
     s.set_bytes(&bytes);
     s
   }
 
-  pub fn bytes(&'a self) -> flatbuffers::Array<'a, i8, 33> {
+  pub fn bytes(&'a self) -> flatbuffers::Array<'a, u8, 33> {
     flatbuffers::Array::follow(&self.0, 0)
   }
 
-  pub fn set_bytes(&mut self, items: &[i8; 33]) {
+  pub fn set_bytes(&mut self, items: &[u8; 33]) {
     flatbuffers::emplace_scalar_array(&mut self.0, 0, items);
   }
 
@@ -511,11 +511,11 @@ impl<'a> ChannelUpdate<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args ChannelUpdateArgs) -> flatbuffers::WIPOffset<ChannelUpdate<'bldr>> {
       let mut builder = ChannelUpdateBuilder::new(_fbb);
-      builder.add_fee_base_msat(args.fee_base_msat);
       builder.add_htlc_maximum_msat(args.htlc_maximum_msat);
       builder.add_htlc_minimum_msat(args.htlc_minimum_msat);
       builder.add_short_channel_id(args.short_channel_id);
       builder.add_fee_proportional_millionths(args.fee_proportional_millionths);
+      builder.add_fee_base_msat(args.fee_base_msat);
       builder.add_update_counter(args.update_counter);
       builder.add_cltv_expiry_delta(args.cltv_expiry_delta);
       builder.add_direction(args.direction);
@@ -543,7 +543,7 @@ impl<'a> ChannelUpdate<'a> {
   }
   #[inline]
   pub fn channel_enabled(&self) -> bool {
-    self._tab.get::<bool>(ChannelUpdate::VT_CHANNEL_ENABLED, Some(false)).unwrap()
+    self._tab.get::<bool>(ChannelUpdate::VT_CHANNEL_ENABLED, Some(true)).unwrap()
   }
   #[inline]
   pub fn direction(&self) -> ChannelDirection {
@@ -562,8 +562,8 @@ impl<'a> ChannelUpdate<'a> {
     self._tab.get::<u64>(ChannelUpdate::VT_HTLC_MAXIMUM_MSAT, Some(0)).unwrap()
   }
   #[inline]
-  pub fn fee_base_msat(&self) -> u64 {
-    self._tab.get::<u64>(ChannelUpdate::VT_FEE_BASE_MSAT, Some(0)).unwrap()
+  pub fn fee_base_msat(&self) -> u32 {
+    self._tab.get::<u32>(ChannelUpdate::VT_FEE_BASE_MSAT, Some(0)).unwrap()
   }
   #[inline]
   pub fn fee_proportional_millionths(&self) -> u32 {
@@ -585,7 +585,7 @@ impl flatbuffers::Verifiable for ChannelUpdate<'_> {
      .visit_field::<u16>(&"cltv_expiry_delta", Self::VT_CLTV_EXPIRY_DELTA, false)?
      .visit_field::<u64>(&"htlc_minimum_msat", Self::VT_HTLC_MINIMUM_MSAT, false)?
      .visit_field::<u64>(&"htlc_maximum_msat", Self::VT_HTLC_MAXIMUM_MSAT, false)?
-     .visit_field::<u64>(&"fee_base_msat", Self::VT_FEE_BASE_MSAT, false)?
+     .visit_field::<u32>(&"fee_base_msat", Self::VT_FEE_BASE_MSAT, false)?
      .visit_field::<u32>(&"fee_proportional_millionths", Self::VT_FEE_PROPORTIONAL_MILLIONTHS, false)?
      .finish();
     Ok(())
@@ -599,7 +599,7 @@ pub struct ChannelUpdateArgs {
     pub cltv_expiry_delta: u16,
     pub htlc_minimum_msat: u64,
     pub htlc_maximum_msat: u64,
-    pub fee_base_msat: u64,
+    pub fee_base_msat: u32,
     pub fee_proportional_millionths: u32,
 }
 impl<'a> Default for ChannelUpdateArgs {
@@ -608,7 +608,7 @@ impl<'a> Default for ChannelUpdateArgs {
         ChannelUpdateArgs {
             short_channel_id: 0,
             update_counter: 0,
-            channel_enabled: false,
+            channel_enabled: true,
             direction: ChannelDirection::AToB,
             cltv_expiry_delta: 0,
             htlc_minimum_msat: 0,
@@ -633,7 +633,7 @@ impl<'a: 'b, 'b> ChannelUpdateBuilder<'a, 'b> {
   }
   #[inline]
   pub fn add_channel_enabled(&mut self, channel_enabled: bool) {
-    self.fbb_.push_slot::<bool>(ChannelUpdate::VT_CHANNEL_ENABLED, channel_enabled, false);
+    self.fbb_.push_slot::<bool>(ChannelUpdate::VT_CHANNEL_ENABLED, channel_enabled, true);
   }
   #[inline]
   pub fn add_direction(&mut self, direction: ChannelDirection) {
@@ -652,8 +652,8 @@ impl<'a: 'b, 'b> ChannelUpdateBuilder<'a, 'b> {
     self.fbb_.push_slot::<u64>(ChannelUpdate::VT_HTLC_MAXIMUM_MSAT, htlc_maximum_msat, 0);
   }
   #[inline]
-  pub fn add_fee_base_msat(&mut self, fee_base_msat: u64) {
-    self.fbb_.push_slot::<u64>(ChannelUpdate::VT_FEE_BASE_MSAT, fee_base_msat, 0);
+  pub fn add_fee_base_msat(&mut self, fee_base_msat: u32) {
+    self.fbb_.push_slot::<u32>(ChannelUpdate::VT_FEE_BASE_MSAT, fee_base_msat, 0);
   }
   #[inline]
   pub fn add_fee_proportional_millionths(&mut self, fee_proportional_millionths: u32) {

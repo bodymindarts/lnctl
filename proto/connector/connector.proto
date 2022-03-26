@@ -47,7 +47,7 @@ message ChannelUpdate {
   uint32 cltv_expiry_delta = 5;
   uint64 htlc_minimum_msat = 6;
   optional uint64 htlc_maximum_msat = 7;
-  uint64 fee_base_msat = 8;
+  uint32 fee_base_msat = 8;
   uint32 fee_proportional_millionths = 9;
 }
 enum Direction {

@@ -1,5 +1,5 @@
 struct PubKey {
-  bytes:[byte:33];
+  bytes:[ubyte:33];
 }
 
 table NodeAnnouncement{
@@ -16,13 +16,13 @@ enum ChannelDirection:uint8 { AToB, BToA }
 
 table ChannelUpdate {
   short_channel_id:uint64;
-  update_counter:uint32;
-  channel_enabled:bool;
+  update_counter:uint32 = 0;
+  channel_enabled:bool = true;
   direction:ChannelDirection;
   cltv_expiry_delta:uint16;
-  htlc_minimum_msat:uint64;
+  htlc_minimum_msat:uint64 = 0;
   htlc_maximum_msat:uint64;
-  fee_base_msat:uint64;
+  fee_base_msat:uint32 = 0;
   fee_proportional_millionths:uint32;
 }
 

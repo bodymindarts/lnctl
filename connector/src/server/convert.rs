@@ -44,7 +44,7 @@ impl From<GossipMessage> for NodeEvent {
                     cltv_expiry_delta: cltv_expiry_delta as u32,
                     htlc_minimum_msat: htlc_minimum_msat.into(),
                     htlc_maximum_msat: htlc_maximum_msat.map(u64::from),
-                    fee_base_msat: fee_base_msat.into(),
+                    fee_base_msat: u64::from(fee_base_msat) as u32,
                     fee_proportional_millionths,
                 })),
             },
