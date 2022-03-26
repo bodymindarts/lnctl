@@ -1,6 +1,8 @@
 use serde::Deserialize;
 use std::path::PathBuf;
 
+pub(crate) const DEFAULT_CHANNEL_SIZE: usize = 100;
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct ServerConfig {
     #[serde(default = "default_server_port")]

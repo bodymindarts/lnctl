@@ -3,6 +3,7 @@ pub mod proto {
 }
 
 use tonic::{transport::Server, Request, Response, Status};
+use uuid::Uuid;
 
 use crate::{config::ServerConfig, connector::Connectors};
 use proto::{
@@ -11,23 +12,25 @@ use proto::{
 };
 
 struct CoordinatorServer {
+    id: Uuid,
     connectors: Connectors,
 }
 
 impl CoordinatorServer {
-    pub fn new(connectors: Connectors) -> Self {
-        Self { connectors }
+    pub fn new(id: Uuid, connectors: Connectors) -> Self {
+        Self { id, connectors }
     }
 }
 
 #[tonic::async_trait]
 impl LnctlCoordinator for CoordinatorServer {
-    async fn list_connectors(
+    async fn get_status(
         &self,
-        _request: Request<ListConnectorsRequest>,
-    ) -> Result<Response<ListConnectorsResponse>, Status> {
+        _request: Request<GetStatusRequest>,
+    ) -> Result<Response<GetStatusResponse>, Status> {
         let connectors = self.connectors.read().await;
-        let ret = ListConnectorsResponse {
+        let ret = GetStatusResponse {
+            coordinator_id: self.id.to_string(),
             connectors: connectors
                 .iter()
                 .map(|(id, con)| ConnectorInfo {
@@ -41,11 +44,15 @@ impl LnctlCoordinator for CoordinatorServer {
     }
 }
 
-pub async fn run_server(config: ServerConfig, connectors: Connectors) -> anyhow::Result<()> {
+pub async fn run_server(
+    config: ServerConfig,
+    id: Uuid,
+    connectors: Connectors,
+) -> anyhow::Result<()> {
     println!("Listening on port {}", config.port);
     Server::builder()
         .add_service(LnctlCoordinatorServer::new(CoordinatorServer::new(
-            connectors,
+            id, connectors,
         )))
         .serve(([0, 0, 0, 0], config.port).into())
         .await?;

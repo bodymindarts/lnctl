@@ -3,8 +3,10 @@ mod proto {
 }
 
 use anyhow::Context;
+use tokio::sync::mpsc;
 use uuid::Uuid;
 
+use super::message::ConnectorMessage;
 use proto::*;
 use tonic::transport::channel::Channel;
 pub type LnCtlConnectorClient = lnctl_connector_client::LnctlConnectorClient<Channel>;
@@ -19,7 +21,10 @@ pub struct ConnectorClient {
 }
 
 impl ConnectorClient {
-    pub async fn connect(address: &str) -> anyhow::Result<Self> {
+    pub async fn connect(
+        address: &str,
+        events: mpsc::Sender<ConnectorMessage>,
+    ) -> anyhow::Result<Self> {
         let mut inner = LnCtlConnectorClient::connect(format!("http://{}", address))
             .await
             .context("couldn't establish connection")?;

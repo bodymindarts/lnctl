@@ -4,6 +4,7 @@ load "../helpers"
 
 setup_file() {
   stop_connector
+  stop_coordinator
   start_network
   start_connector
 }
@@ -17,8 +18,8 @@ teardown_file() {
   retry 5 1 curl_connector GetStatus
   start_coordinator
 
-  retry 5 1 curl_coordinator ListConnectors 
-  n_connectors=$(curl_coordinator ListConnectors | jq -r '.connectors | length')
+  retry 5 1 curl_coordinator GetStatus 
+  n_connectors=$(curl_coordinator GetStatus | jq -r '.connectors | length')
   [ "${n_connectors}" -eq 1 ]
 
   stop_coordinator

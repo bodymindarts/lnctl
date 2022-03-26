@@ -20,7 +20,7 @@ enum ConnectorType {
 message StreamNodeEventsRequest { }
 message NodeEvent {
   oneof event {
-    LnGossip gossip = 2;
+    LnGossip gossip = 1;
   }
 }
 message LnGossip {

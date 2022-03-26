@@ -3,13 +3,13 @@ syntax = "proto3";
 package coordinator;
 
 service LnctlCoordinator {
-  rpc ListConnectors(ListConnectorsRequest) returns (ListConnectorsResponse) {}
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse) {}
 }
 
-message ListConnectorsRequest {}
-
-message ListConnectorsResponse {
-  repeated ConnectorInfo connectors = 1;
+message GetStatusRequest {}
+message GetStatusResponse {
+  string coordinator_id = 1;
+  repeated ConnectorInfo connectors = 2;
 }
 
 message ConnectorInfo {
