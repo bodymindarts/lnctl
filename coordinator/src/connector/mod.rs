@@ -12,19 +12,17 @@ pub use message::ConnectorMessage;
 
 pub struct Connectors {
     inner: Arc<RwLock<HashMap<Uuid, ConnectorClient>>>,
-    receiver: mpsc::Receiver<ConnectorMessage>,
 }
 
 impl Connectors {
-    pub async fn new(connectors_file: PathBuf) -> anyhow::Result<Self> {
+    pub async fn new(
+        connectors_file: PathBuf,
+        sender: mpsc::Sender<ConnectorMessage>,
+    ) -> anyhow::Result<Self> {
         let file_changes = file::watch(connectors_file).await?;
         let connectors = Arc::new(RwLock::new(HashMap::new()));
-        let (tx, rx) = mpsc::channel(config::DEFAULT_CHANNEL_SIZE);
-        Self::spawn_connect_from_list(Arc::clone(&connectors), tx, file_changes);
-        Ok(Self {
-            inner: connectors,
-            receiver: rx,
-        })
+        Self::spawn_connect_from_list(Arc::clone(&connectors), sender, file_changes);
+        Ok(Self { inner: connectors })
     }
 
     pub async fn read(&self) -> RwLockReadGuard<'_, HashMap<Uuid, ConnectorClient>> {
