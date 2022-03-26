@@ -1,4 +1,4 @@
-use crate::primitives::{MilliSatoshi, NodeId, UnixTimestampSecs};
+use shared::primitives::*;
 
 #[derive(Debug, Clone, Copy)]
 pub enum ChannelDirection {

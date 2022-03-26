@@ -1,9 +1,9 @@
 use super::flat;
 use crate::{
     gossip::{ChannelDirection, GossipMessage, Message},
-    primitives::hex_str,
     server::proto,
 };
+use shared::utils::hex_str;
 
 #[repr(transparent)]
 pub struct FinishedBytes<'a>(&'a [u8]);

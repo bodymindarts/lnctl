@@ -2,7 +2,7 @@ export CONNECTOR_CONFIG=./test/connector/connector.yml
 export COORDINATOR_CONFIG=./test/coordinator/coordinator.yml
 
 start_connector() {
-  background cargo run --bin connector
+  background cargo run --bin lnctl-connector
 }
 
 stop_connector() {
@@ -10,7 +10,7 @@ stop_connector() {
 }
 
 start_coordinator() {
-  background cargo run --bin coordinator
+  background cargo run --bin lnctl-coordinator
 }
 
 stop_coordinator() {

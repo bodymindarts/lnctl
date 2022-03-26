@@ -1,5 +1,5 @@
 [package]
-name = "connector"
+name = "lnctl-connector"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,6 +10,8 @@ default = ["lnd"]
 lnd = ["tonic_lnd"]
 
 [dependencies]
+
+shared = { path = "../shared", package = "lnctl-shared" }
 
 anyhow = "1.0"
 bitcoin = { version = "0.27", features = ["use-serde"] }

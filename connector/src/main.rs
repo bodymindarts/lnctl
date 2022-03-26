@@ -1,5 +1,5 @@
 use anyhow::Context;
-use connector::ConnectorConfig;
+use lnctl_connector::ConnectorConfig;
 
 const CONFIG_PATH_KEY: &'static str = "CONNECTOR_CONFIG";
 
@@ -9,6 +9,6 @@ async fn main() -> anyhow::Result<()> {
     let config_file = std::fs::read_to_string(path).context("Couldn't read config file")?;
     let config: ConnectorConfig =
         serde_yaml::from_str(&config_file).context("Couldn't parse config file")?;
-    connector::run(config).await?;
+    lnctl_connector::run(config).await?;
     Ok(())
 }

@@ -41,7 +41,7 @@ impl From<&GossipMessage> for GossipMessageKey {
 mod test {
     use super::*;
     use crate::gossip::{ChannelDirection, GossipMessage, Message};
-    use crate::primitives::{MilliSatoshi, NodeId, UnixTimestampSecs};
+    use shared::primitives::*;
 
     #[test]
     fn key_order() {

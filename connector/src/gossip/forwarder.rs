@@ -7,7 +7,7 @@ use std::sync::Mutex;
 use tokio::sync::mpsc;
 
 use super::message::*;
-use crate::primitives::UnixTimestampSecs;
+use shared::primitives::*;
 
 pub struct RoutingMessageForwarder {
     bitcoin_network: bitcoin::Network,

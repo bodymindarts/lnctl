@@ -10,10 +10,10 @@ use rand::Rng;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
-use crate::primitives::ConnectorSecret;
 use forwarder::RoutingMessageForwarder;
 use logger::LnLogger;
 pub use message::*;
+use shared::primitives::*;
 
 pub(crate) type LnPeers = PeerManager<
     SocketDescriptor,

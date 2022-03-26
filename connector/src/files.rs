@@ -12,7 +12,7 @@ use std::{
     process,
 };
 
-use crate::primitives::*;
+use shared::primitives::*;
 
 const CONNECTOR_SEED_FILE: &str = "seed";
 const UUID_FILE_NAME: &str = "connector-id";

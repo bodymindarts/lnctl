@@ -18,7 +18,7 @@ struct Cli {
 enum Commands {
     Connector {},
     Server {},
-    ListConnectors {},
+    GetStatus {},
 }
 
 const DEFAULT_CONFIG: &str = "lnctl.yml";
@@ -35,13 +35,13 @@ pub async fn run() -> anyhow::Result<()> {
         Commands::Server {} => {
             coordinator::run(config.coordinator).await?;
         }
-        Commands::ListConnectors {} => {
+        Commands::GetStatus {} => {
             let config = client::ClientConfig {
                 addr: "localhost".to_string(),
                 port: config.coordinator.server.port,
             };
 
-            client::list_connectors(config).await?;
+            client::get_status(config).await?;
         }
     }
     Ok(())

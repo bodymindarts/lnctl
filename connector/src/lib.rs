@@ -4,7 +4,6 @@ mod files;
 mod gossip;
 #[cfg(feature = "lnd")]
 mod lnd;
-mod primitives;
 mod server;
 
 pub mod node_client;

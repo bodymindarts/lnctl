@@ -1,5 +1,5 @@
 use anyhow::Context;
-use coordinator::CoordinatorConfig;
+use lnctl_coordinator::CoordinatorConfig;
 
 const CONFIG_PATH_KEY: &'static str = "COORDINATOR_CONFIG";
 
@@ -9,6 +9,6 @@ async fn main() -> anyhow::Result<()> {
     let config_file = std::fs::read_to_string(path).context("Couldn't read config file")?;
     let config: CoordinatorConfig =
         serde_yaml::from_str(&config_file).context("Couldn't parse config file")?;
-    coordinator::run(config).await?;
+    lnctl_coordinator::run(config).await?;
     Ok(())
 }

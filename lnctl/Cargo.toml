@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-connector = { path = "../connector" }
-coordinator = { path = "../coordinator" }
+connector = { path = "../connector", package = "lnctl-connector" }
+coordinator = { path = "../coordinator", package = "lnctl-coordinator" }
 
 anyhow = "1.0"
 clap = { version =  "3.0", features = ["derive"] }

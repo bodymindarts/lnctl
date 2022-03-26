@@ -1,5 +1,6 @@
-use crate::primitives::MonitoredNodeId;
 use bitcoin::secp256k1::PublicKey;
+
+use shared::primitives::*;
 
 pub enum NodeType {
     Lnd,

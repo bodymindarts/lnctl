@@ -15,12 +15,12 @@ use crate::{
     db::Db,
     gossip::GossipMessage,
     node_client::NodeClient,
-    primitives::*,
 };
 use proto::{
     lnctl_connector_server::{LnctlConnector, LnctlConnectorServer},
     *,
 };
+use shared::primitives::*;
 
 type ConnectorResponse<T> = Result<Response<T>, Status>;
 type ResponseStream = Pin<Box<dyn Stream<Item = Result<NodeEvent, Status>> + Send>>;

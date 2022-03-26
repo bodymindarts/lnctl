@@ -4,10 +4,8 @@ use std::str::FromStr;
 use tonic_lnd::{rpc::*, Client as InnerClient};
 
 use super::config::LndConnectorConfig;
-use crate::{
-    node_client::{self, NodeClient, NodeType},
-    primitives::MonitoredNodeId,
-};
+use crate::node_client::{self, NodeClient, NodeType};
+use shared::primitives::*;
 
 pub struct LndClient {
     inner: InnerClient,
