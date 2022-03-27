@@ -6,12 +6,12 @@ use std::{collections::HashMap, path::PathBuf, sync::Arc};
 use tokio::sync::{mpsc, RwLock, RwLockReadGuard};
 use uuid::Uuid;
 
-use crate::config;
 pub use client::ConnectorClient;
 pub use message::ConnectorMessage;
+use shared::primitives::ConnectorId;
 
 pub struct Connectors {
-    inner: Arc<RwLock<HashMap<Uuid, ConnectorClient>>>,
+    inner: Arc<RwLock<HashMap<ConnectorId, ConnectorClient>>>,
 }
 
 impl Connectors {
@@ -25,12 +25,12 @@ impl Connectors {
         Ok(Self { inner: connectors })
     }
 
-    pub async fn read(&self) -> RwLockReadGuard<'_, HashMap<Uuid, ConnectorClient>> {
+    pub async fn read(&self) -> RwLockReadGuard<'_, HashMap<ConnectorId, ConnectorClient>> {
         self.inner.read().await
     }
 
     fn spawn_connect_from_list(
-        connectors: Arc<RwLock<HashMap<Uuid, ConnectorClient>>>,
+        connectors: Arc<RwLock<HashMap<ConnectorId, ConnectorClient>>>,
         sender: mpsc::Sender<ConnectorMessage>,
         mut file_changes: mpsc::Receiver<Vec<String>>,
     ) {

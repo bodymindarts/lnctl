@@ -49,6 +49,13 @@ impl UnixTimestampSecs {
     }
 }
 wrapper! { ConnectorId, Uuid }
+impl FromStr for ConnectorId {
+    type Err = <Uuid as FromStr>::Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self(s.parse::<Uuid>()?))
+    }
+}
 wrapper! { ConnectorSecret, SecretKey }
 wrapper! { ConnectorPubKey, PublicKey }
 wrapper! { MonitoredNodeId, PublicKey }
