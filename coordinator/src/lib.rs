@@ -1,3 +1,4 @@
+mod bus;
 mod config;
 mod connector;
 mod db;
