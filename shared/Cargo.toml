@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 bitcoin = { version = "0.27", features = ["use-serde"] }
 uuid = { version = "0.8", features = ["v4"] }
+futures = { version = "0.3", default-features = false, features = ["alloc"] }
+tokio = { version = "1.5", features = [ "io-util", "macros", "rt", "rt-multi-thread", "sync", "net", "time" ] }
+tokio-stream = "0.1"
