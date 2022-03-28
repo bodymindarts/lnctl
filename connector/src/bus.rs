@@ -29,6 +29,7 @@ pub(crate) type ConnectorBus = MessageBus<BusMessage>;
 
 mod convert {
     use super::*;
+    use shared::bus::*;
 
     impl From<&NodeAnnouncement> for BusMessage {
         fn from(msg: &NodeAnnouncement) -> Self {
@@ -58,6 +59,24 @@ mod convert {
     impl From<proto::NodeEvent> for BusMessage {
         fn from(proto: proto::NodeEvent) -> Self {
             BusMessage::NodeEvent(proto)
+        }
+    }
+
+    impl BusSubscriber<BusMessage> for LdkGossip {
+        fn filter(msg: &BusMessage) -> bool {
+            if let BusMessage::LdkGossip(_) = msg {
+                true
+            } else {
+                false
+            }
+        }
+
+        fn convert(msg: BusMessage) -> Option<Self> {
+            if let BusMessage::LdkGossip(msg) = msg {
+                Some(msg)
+            } else {
+                None
+            }
         }
     }
 }

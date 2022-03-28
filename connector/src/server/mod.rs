@@ -43,19 +43,13 @@ impl ConnectorServer {
     ) -> Self {
         let spawn_bus = bus.clone();
         tokio::spawn(async move {
-            while let Some(BusMessage::LdkGossip(msg)) = spawn_bus
-                .subscribe_with_filter(|msg: &BusMessage| {
-                    if let BusMessage::LdkGossip(_) = msg {
-                        true
-                    } else {
-                        false
-                    }
-                })
-                .await
-                .next()
-                .await
+            while let Some(ln_gossip) = spawn_bus.subscribe::<proto::LnGossip>().await.next().await
             {
-                spawn_bus.dispatch(proto::NodeEvent::from(msg)).await;
+                spawn_bus
+                    .dispatch(proto::NodeEvent {
+                        event: Some(proto::node_event::Event::Gossip(ln_gossip)),
+                    })
+                    .await;
             }
         });
         Self {
@@ -93,24 +87,7 @@ impl LnctlConnector for ConnectorServer {
             .map(|gossip| proto::NodeEvent {
                 event: Some(proto::node_event::Event::Gossip(gossip)),
             })
-            .chain(
-                self.bus
-                    .subscribe_with_filter(|msg: &BusMessage| {
-                        if let BusMessage::NodeEvent(_) = msg {
-                            true
-                        } else {
-                            false
-                        }
-                    })
-                    .await
-                    .filter_map(|msg| {
-                        if let BusMessage::NodeEvent(event) = msg {
-                            Some(event)
-                        } else {
-                            None
-                        }
-                    }),
-            )
+            .chain(self.bus.subscribe::<proto::NodeEvent>().await)
             .map(|event| Ok(event));
         Ok(Response::new(
             Box::pin(output_stream) as Self::StreamNodeEventsStream

@@ -1,10 +1,11 @@
 use super::proto;
-use crate::{bus::*, gossip::*, node_client::NodeType};
+use crate::{bus::*, node_client::NodeType};
+use shared::bus::BusSubscriber;
 
-impl From<LdkGossip> for proto::NodeEvent {
+impl From<LdkGossip> for proto::LnGossip {
     fn from(msg: LdkGossip) -> Self {
         use lightning::ln::msgs::*;
-        let ln_gossip = match msg {
+        match msg {
             LdkGossip::NodeAnnouncement {
                 received_at,
                 msg: UnsignedNodeAnnouncement { node_id ,..},
@@ -53,9 +54,6 @@ impl From<LdkGossip> for proto::NodeEvent {
             //         fee_proportional_millionths,
             //     })),
             // },
-        };
-        proto::NodeEvent {
-            event: Some(proto::node_event::Event::Gossip(ln_gossip)),
         }
     }
 }
@@ -64,6 +62,42 @@ impl From<NodeType> for proto::ConnectorType {
     fn from(node_type: NodeType) -> Self {
         match node_type {
             NodeType::Lnd => proto::ConnectorType::Lnd,
+        }
+    }
+}
+
+impl BusSubscriber<BusMessage> for proto::LnGossip {
+    fn filter(msg: &BusMessage) -> bool {
+        if let BusMessage::LdkGossip(_) = msg {
+            true
+        } else {
+            false
+        }
+    }
+
+    fn convert(msg: BusMessage) -> Option<Self> {
+        if let BusMessage::LdkGossip(event) = msg {
+            Some(event.into())
+        } else {
+            None
+        }
+    }
+}
+
+impl BusSubscriber<BusMessage> for proto::NodeEvent {
+    fn filter(msg: &BusMessage) -> bool {
+        if let BusMessage::NodeEvent(_) = msg {
+            true
+        } else {
+            false
+        }
+    }
+
+    fn convert(msg: BusMessage) -> Option<Self> {
+        if let BusMessage::NodeEvent(event) = msg {
+            Some(event)
+        } else {
+            None
         }
     }
 }

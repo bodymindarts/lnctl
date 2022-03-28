@@ -13,6 +13,14 @@ pub struct MessageBus<T: Clone + Send + Sync + 'static> {
     subscribers: Arc<RwLock<Vec<(Box<dyn BusEventFilter<T>>, mpsc::Sender<T>)>>>,
 }
 
+pub trait BusSubscriber<T>
+where
+    Self: Sized,
+{
+    fn filter(event: &T) -> bool;
+    fn convert(event: T) -> Option<Self>;
+}
+
 impl<T: Clone + Send + Sync + 'static> MessageBus<T> {
     pub fn new(buffer_size: usize) -> Self {
         let (inbound, mut receiver): (mpsc::Sender<T>, mpsc::Receiver<T>) =
@@ -60,16 +68,13 @@ impl<T: Clone + Send + Sync + 'static> MessageBus<T> {
         }
     }
 
-    pub async fn subscribe_with_filter(
-        &self,
-        filter: impl BusEventFilter<T> + 'static,
-    ) -> impl Stream<Item = T> {
+    pub async fn subscribe<S: BusSubscriber<T> + 'static>(&self) -> impl Stream<Item = S> {
         let (inbound, receiver) = mpsc::channel(self.buffer_size);
         {
             let mut subs = self.subscribers.write().await;
-            subs.push((Box::new(filter), inbound));
+            subs.push((Box::new(<S as BusSubscriber<T>>::filter), inbound));
         }
-        ReceiverStream::new(receiver)
+        ReceiverStream::new(receiver).filter_map(|event: T| <S as BusSubscriber<T>>::convert(event))
     }
 
     pub async fn dispatch(
@@ -102,19 +107,42 @@ mod tests {
         value: u32,
     }
 
+    impl BusSubscriber<Dummy> for u8 {
+        fn filter(Dummy { value }: &Dummy) -> bool {
+            *value <= u8::MAX as u32
+        }
+
+        fn convert(Dummy { value }: Dummy) -> Option<u8> {
+            Some(value as u8)
+        }
+    }
+
+    impl BusSubscriber<Dummy> for u32 {
+        fn filter(_: &Dummy) -> bool {
+            true
+        }
+
+        fn convert(Dummy { value }: Dummy) -> Option<u32> {
+            Some(value)
+        }
+    }
+
     #[tokio::test]
     async fn test() {
         let bus = MessageBus::new(10);
-        let mut filtered = bus
-            .subscribe_with_filter(|Dummy { value }: &Dummy| *value > 2)
-            .await;
-        let mut unfiltered = bus.subscribe_with_filter(|_: &Dummy| true).await;
+        let mut filtered = bus.subscribe::<u8>().await;
+        let mut unfiltered = bus.subscribe::<u32>().await;
 
         let _ = bus.dispatch(Dummy { value: 1 }).await.unwrap();
-        let _ = bus.dispatch(Dummy { value: 5 }).await.unwrap();
+        let _ = bus
+            .dispatch(Dummy {
+                value: u8::MAX as u32 + 1,
+            })
+            .await
+            .unwrap();
 
-        assert_eq!(filtered.next().await.unwrap().value, 5);
-        assert_eq!(unfiltered.next().await.unwrap().value, 1);
-        assert_eq!(unfiltered.next().await.unwrap().value, 5);
+        assert_eq!(filtered.next().await.unwrap(), 1);
+        assert_eq!(unfiltered.next().await.unwrap(), 1);
+        assert_eq!(unfiltered.next().await.unwrap(), u8::MAX as u32 + 1);
     }
 }

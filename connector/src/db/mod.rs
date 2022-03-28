@@ -28,17 +28,8 @@ impl Db {
         let gossip_db = gossip.clone();
         let spawn_bus = bus.clone();
         tokio::spawn(async move {
-            let mut gossip_stream = spawn_bus
-                .subscribe_with_filter(|msg: &BusMessage| {
-                    if let BusMessage::LdkGossip(_) = msg {
-                        true
-                    } else {
-                        false
-                    }
-                })
-                .await;
             let mut buffer = flatbuffers::FlatBufferBuilder::new();
-            while let Some(BusMessage::LdkGossip(msg)) = gossip_stream.next().await {
+            while let Some(msg) = spawn_bus.subscribe::<LdkGossip>().await.next().await {
                 let key = GossipMessageKey::from(&msg);
                 let finished_bytes = FinishedBytes::from((&mut buffer, msg));
                 if let Err(e) = gossip_db.compare_and_swap(
