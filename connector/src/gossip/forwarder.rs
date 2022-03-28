@@ -6,42 +6,28 @@ use lightning::{
 use std::sync::Mutex;
 use tokio::sync::mpsc;
 
-use super::message::*;
+use crate::bus::*;
 use shared::primitives::*;
 
-pub struct RoutingMessageForwarder {
+pub(crate) struct RoutingMessageForwarder {
     bitcoin_network: bitcoin::Network,
-    sender: mpsc::Sender<GossipMessage>,
+    bus: ConnectorBus,
     pending_events: Mutex<Vec<MessageSendEvent>>,
 }
 
 impl RoutingMessageForwarder {
-    pub fn new(bitcoin_network: bitcoin::Network, sender: mpsc::Sender<GossipMessage>) -> Self {
+    pub fn new(bitcoin_network: bitcoin::Network, bus: ConnectorBus) -> Self {
         Self {
             bitcoin_network,
-            sender,
+            bus,
             pending_events: Mutex::new(Vec::new()),
         }
-    }
-
-    fn forward_message(&self, msg: GossipMessage) {
-        let sender = self.sender.clone();
-        tokio::spawn(async move {
-            if let Err(e) = sender.send(msg).await {
-                eprintln!("Error forawding msg: {}", e);
-            }
-        });
     }
 }
 
 impl RoutingMessageHandler for RoutingMessageForwarder {
     fn handle_node_announcement(&self, msg: &NodeAnnouncement) -> Result<bool, LightningError> {
-        self.forward_message(GossipMessage {
-            received_at: UnixTimestampSecs::now(),
-            msg: Message::NodeAnnouncement {
-                node_id: msg.contents.node_id.into(),
-            },
-        });
+        self.bus.spawn_dispatch(msg);
         Ok(false)
     }
 
@@ -49,45 +35,12 @@ impl RoutingMessageHandler for RoutingMessageForwarder {
         &self,
         msg: &ChannelAnnouncement,
     ) -> Result<bool, LightningError> {
-        self.forward_message(GossipMessage {
-            received_at: UnixTimestampSecs::now(),
-            msg: Message::ChannelAnnouncement {
-                short_channel_id: msg.contents.short_channel_id,
-                node_a_id: msg.contents.node_id_1.into(),
-                node_b_id: msg.contents.node_id_2.into(),
-            },
-        });
+        self.bus.spawn_dispatch(msg);
         Ok(false)
     }
 
     fn handle_channel_update(&self, msg: &ChannelUpdate) -> Result<bool, LightningError> {
-        let channel_enabled = msg.contents.flags & (1 << 1) != (1 << 1);
-        let direction = if msg.contents.flags & 1 == 1 {
-            ChannelDirection::BToA
-        } else {
-            ChannelDirection::AToB
-        };
-
-        self.forward_message(GossipMessage {
-            received_at: UnixTimestampSecs::now(),
-            msg: Message::ChannelUpdate {
-                short_channel_id: msg.contents.short_channel_id,
-                update_counter: msg.contents.timestamp,
-                channel_enabled,
-                direction,
-                cltv_expiry_delta: msg.contents.cltv_expiry_delta,
-                htlc_minimum_msat: msg.contents.htlc_minimum_msat.into(),
-                htlc_maximum_msat: if let OptionalField::Present(msats) =
-                    msg.contents.htlc_maximum_msat
-                {
-                    Some(msats.into())
-                } else {
-                    None
-                },
-                fee_base_msat: msg.contents.fee_base_msat.into(),
-                fee_proportional_millionths: msg.contents.fee_proportional_millionths,
-            },
-        });
+        self.bus.spawn_dispatch(msg);
         Ok(false)
     }
 

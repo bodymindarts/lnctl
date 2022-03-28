@@ -1,6 +1,5 @@
 mod forwarder;
 mod logger;
-mod message;
 
 use lightning::ln::peer_handler::{
     ErroringMessageHandler, IgnoringMessageHandler, MessageHandler, PeerManager,
@@ -10,9 +9,9 @@ use rand::Rng;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
+use crate::bus::ConnectorBus;
 use forwarder::RoutingMessageForwarder;
 use logger::LnLogger;
-pub use message::*;
 use shared::primitives::*;
 
 pub(crate) type LnPeers = PeerManager<
@@ -23,20 +22,20 @@ pub(crate) type LnPeers = PeerManager<
     Arc<IgnoringMessageHandler>,
 >;
 
-pub struct Gossip {}
+pub(crate) struct Gossip {}
 
 impl Gossip {
     pub fn listen(
         listen_port: u16,
         bitcoin_network: bitcoin::Network,
         connector_secret: ConnectorSecret,
-    ) -> mpsc::Receiver<GossipMessage> {
-        let (send, receive) = mpsc::channel(50);
+        bus: ConnectorBus,
+    ) {
         let msg_handler = MessageHandler {
             chan_handler: Arc::new(ErroringMessageHandler::new()),
             route_handler: Arc::new(forwarder::RoutingMessageForwarder::new(
                 bitcoin_network,
-                send,
+                bus,
             )),
         };
         let mut ephemeral_bytes = [0; 32];
@@ -49,7 +48,6 @@ impl Gossip {
             Arc::new(IgnoringMessageHandler {}),
         );
         Self::spawn_peer_listener(listen_port, Arc::new(peers));
-        receive
     }
 
     fn spawn_peer_listener(listen_port: u16, peer_manager: Arc<LnPeers>) {

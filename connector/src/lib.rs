@@ -1,3 +1,4 @@
+mod bus;
 mod config;
 mod db;
 mod files;
@@ -12,6 +13,7 @@ use anyhow::Context;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
+use bus::ConnectorBus;
 pub use config::ConnectorConfig;
 use gossip::Gossip;
 use node_client::NodeClient;
@@ -25,11 +27,16 @@ pub async fn run(config: ConnectorConfig) -> anyhow::Result<()> {
     };
 
     let node_info = client.node_info().await?;
-    let db = db::Db::new(&config.data_dir)?;
+    let bus = ConnectorBus::new(config::DEFAULT_CHANNEL_SIZE);
+    let db = db::Db::new(&config.data_dir, bus.clone())?;
     let (connector_id, connector_pubkey, connector_secret_key) =
         files::init(config.data_dir, &node_info.node_id).context("creating cache files")?;
-    let receiver = Gossip::listen(config.gossip.port, node_info.network, connector_secret_key);
-    let receiver = db.forward_gossip(receiver);
+    Gossip::listen(
+        config.gossip.port,
+        node_info.network,
+        connector_secret_key,
+        bus.clone(),
+    );
     let _ = client
         .connect_to_peer(
             connector_pubkey.into(),
@@ -41,7 +48,7 @@ pub async fn run(config: ConnectorConfig) -> anyhow::Result<()> {
         config.server,
         connector_id,
         node_info.node_id,
-        receiver,
+        bus,
         Arc::new(RwLock::new(client)),
         db,
     )

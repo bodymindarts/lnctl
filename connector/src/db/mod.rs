@@ -7,39 +7,40 @@ mod keys;
 
 use std::path::PathBuf;
 use tokio::sync::mpsc;
+use tokio_stream::{wrappers::ReceiverStream, Stream, StreamExt};
 use zerocopy::*;
 
-use crate::gossip::GossipMessage;
 use crate::server::proto;
+use crate::{bus::*, config};
 use convert::FinishedBytes;
 use keys::GossipMessageKey;
 
-pub struct Db {
+pub(crate) struct Db {
     _inner: sled::Db,
     gossip: sled::Tree,
+    bus: ConnectorBus,
 }
 
 impl Db {
-    pub fn new(data_dir: &PathBuf) -> anyhow::Result<Self> {
+    pub fn new(data_dir: &PathBuf, bus: ConnectorBus) -> anyhow::Result<Self> {
         let db: sled::Db = sled::open(format!("{}/sled", data_dir.display()))?;
         let gossip = db.open_tree("gossip")?;
-        Ok(Self { _inner: db, gossip })
-    }
-
-    pub fn forward_gossip(
-        &self,
-        mut receiver: mpsc::Receiver<GossipMessage>,
-    ) -> mpsc::Receiver<GossipMessage> {
-        let (sender, new_receiver) = mpsc::channel(50);
-        let gossip_db = self.gossip.clone();
-        let mut buffer = flatbuffers::FlatBufferBuilder::new();
+        let gossip_db = gossip.clone();
+        let spawn_bus = bus.clone();
         tokio::spawn(async move {
-            while let Some(msg) = receiver.recv().await {
-                let finished_bytes = FinishedBytes::from((&mut buffer, &msg));
+            let mut gossip_stream = spawn_bus
+                .subscribe_with_filter(|msg: &BusMessage| {
+                    if let BusMessage::LdkGossip(_) = msg {
+                        true
+                    } else {
+                        false
+                    }
+                })
+                .await;
+            let mut buffer = flatbuffers::FlatBufferBuilder::new();
+            while let Some(BusMessage::LdkGossip(msg)) = gossip_stream.next().await {
                 let key = GossipMessageKey::from(&msg);
-                if let Err(e) = sender.send(msg).await {
-                    eprintln!("Couldn't forward gossip: {}", e);
-                }
+                let finished_bytes = FinishedBytes::from((&mut buffer, msg));
                 if let Err(e) = gossip_db.compare_and_swap(
                     key.as_bytes(),
                     None as Option<&[u8]>,
@@ -49,11 +50,16 @@ impl Db {
                 }
             }
         });
-        new_receiver
+        Ok(Self {
+            _inner: db,
+            gossip,
+            bus,
+        })
     }
 
-    pub fn iter_gossip(&self, sender: mpsc::Sender<proto::LnGossip>) {
+    pub fn load_gossip(&self) -> impl Stream<Item = proto::LnGossip> {
         let mut iter = self.gossip.iter();
+        let (sender, receiver) = mpsc::channel(config::DEFAULT_CHANNEL_SIZE);
         tokio::spawn(async move {
             while let Some(Ok((_, value))) = iter.next() {
                 let bytes = value.as_ref();
@@ -66,5 +72,6 @@ impl Db {
                 }
             }
         });
+        ReceiverStream::new(receiver)
     }
 }

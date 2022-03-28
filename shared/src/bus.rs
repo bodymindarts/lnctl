@@ -6,7 +6,8 @@ use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 pub trait BusEventFilter<T>: Fn(&T) -> bool + Send + Sync {}
 impl<F: Send + Sync, T> BusEventFilter<T> for F where F: Fn(&T) -> bool {}
 
-pub struct MessageBus<T> {
+#[derive(Clone)]
+pub struct MessageBus<T: Clone + Send + Sync + 'static> {
     buffer_size: usize,
     inbound: mpsc::Sender<T>,
     subscribers: Arc<RwLock<Vec<(Box<dyn BusEventFilter<T>>, mpsc::Sender<T>)>>>,
@@ -26,7 +27,7 @@ impl<T: Clone + Send + Sync + 'static> MessageBus<T> {
                     let subs = subs.read().await;
                     let len = subs.len();
                     if len > 0 {
-                        for i in 1..len - 1 {
+                        for i in 1..len {
                             let (filter, inbound) = &subs[i];
                             if filter(&event) {
                                 if let Err(_) = inbound.send(event.clone()).await {
@@ -44,11 +45,11 @@ impl<T: Clone + Send + Sync + 'static> MessageBus<T> {
                         }
                     }
                 }
-            }
-            if to_remove.len() > 0 {
-                let mut subs = subs.write().await;
-                for i in to_remove.drain(..) {
-                    let _ = subs.remove(i);
+                if to_remove.len() > 0 {
+                    let mut subs = subs.write().await;
+                    for i in to_remove.drain(..) {
+                        let _ = subs.remove(i);
+                    }
                 }
             }
         });
@@ -64,17 +65,31 @@ impl<T: Clone + Send + Sync + 'static> MessageBus<T> {
         filter: impl BusEventFilter<T> + 'static,
     ) -> impl Stream<Item = T> {
         let (inbound, receiver) = mpsc::channel(self.buffer_size);
-        let subscribers = Arc::clone(&self.subscribers);
-        let mut subs = subscribers.write().await;
-        subs.push((Box::new(filter), inbound));
+        {
+            let mut subs = self.subscribers.write().await;
+            subs.push((Box::new(filter), inbound));
+        }
         ReceiverStream::new(receiver)
     }
 
     pub async fn dispatch(
         &self,
-        msg: impl Into<T> + Send + 'static,
+        msg: impl Into<T> + Send,
     ) -> Result<(), mpsc::error::SendError<T>> {
         self.inbound.send(msg.into()).await
+    }
+
+    pub fn spawn_dispatch(&self, msg: impl Into<T> + Send)
+    where
+        T: std::fmt::Debug,
+    {
+        let inbound = self.inbound.clone();
+        let msg = msg.into();
+        tokio::spawn(async move {
+            if let Err(e) = inbound.send(msg).await {
+                eprintln!("Error spawning dispatch: {:?}", e);
+            }
+        });
     }
 }
 
