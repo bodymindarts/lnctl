@@ -43,13 +43,16 @@ impl ConnectorServer {
     ) -> Self {
         let spawn_bus = bus.clone();
         tokio::spawn(async move {
-            while let Some(ln_gossip) = spawn_bus.subscribe::<proto::LnGossip>().await.next().await
-            {
-                spawn_bus
+            let mut stream = spawn_bus.subscribe::<proto::LnGossip>().await;
+            while let Some(ln_gossip) = stream.next().await {
+                if let Err(e) = spawn_bus
                     .dispatch(proto::NodeEvent {
                         event: Some(proto::node_event::Event::Gossip(ln_gossip)),
                     })
-                    .await;
+                    .await
+                {
+                    eprintln!("Could not dispatch: {:?}", e);
+                }
             }
         });
         Self {

@@ -18,7 +18,6 @@ use keys::GossipMessageKey;
 pub(crate) struct Db {
     _inner: sled::Db,
     gossip: sled::Tree,
-    bus: ConnectorBus,
 }
 
 impl Db {
@@ -26,10 +25,10 @@ impl Db {
         let db: sled::Db = sled::open(format!("{}/sled", data_dir.display()))?;
         let gossip = db.open_tree("gossip")?;
         let gossip_db = gossip.clone();
-        let spawn_bus = bus.clone();
         tokio::spawn(async move {
+            let mut stream = bus.subscribe::<LdkGossip>().await;
             let mut buffer = flatbuffers::FlatBufferBuilder::new();
-            while let Some(msg) = spawn_bus.subscribe::<LdkGossip>().await.next().await {
+            while let Some(msg) = stream.next().await {
                 let key = GossipMessageKey::from(&msg);
                 let finished_bytes = FinishedBytes::from((&mut buffer, msg));
                 if let Err(e) = gossip_db.compare_and_swap(
@@ -41,11 +40,7 @@ impl Db {
                 }
             }
         });
-        Ok(Self {
-            _inner: db,
-            gossip,
-            bus,
-        })
+        Ok(Self { _inner: db, gossip })
     }
 
     pub fn load_gossip(&self) -> impl Stream<Item = proto::LnGossip> {

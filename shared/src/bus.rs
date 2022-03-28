@@ -21,7 +21,7 @@ where
     fn convert(event: T) -> Option<Self>;
 }
 
-impl<T: Clone + Send + Sync + 'static> MessageBus<T> {
+impl<T: Clone + Send + Sync + std::fmt::Debug + 'static> MessageBus<T> {
     pub fn new(buffer_size: usize) -> Self {
         let (inbound, mut receiver): (mpsc::Sender<T>, mpsc::Receiver<T>) =
             mpsc::channel(buffer_size);
@@ -38,16 +38,16 @@ impl<T: Clone + Send + Sync + 'static> MessageBus<T> {
                         for i in 1..len {
                             let (filter, inbound) = &subs[i];
                             if filter(&event) {
-                                if let Err(_) = inbound.send(event.clone()).await {
-                                    eprintln!("Error sending event");
+                                if let Err(e) = inbound.send(event.clone()).await {
+                                    eprintln!("Error forwarding event: {:?}", e);
                                     to_remove.push(i);
                                 }
                             }
                         }
                         let (filter, inbound) = &subs[0];
                         if filter(&event) {
-                            if let Err(_) = inbound.send(event).await {
-                                eprintln!("Error sending event");
+                            if let Err(e) = inbound.send(event).await {
+                                eprintln!("Error forwarding event: {:?}", e);
                                 to_remove.push(0);
                             }
                         }
@@ -79,7 +79,7 @@ impl<T: Clone + Send + Sync + 'static> MessageBus<T> {
 
     pub async fn dispatch(
         &self,
-        msg: impl Into<T> + Send,
+        msg: impl Into<T> + Send + std::fmt::Debug,
     ) -> Result<(), mpsc::error::SendError<T>> {
         self.inbound.send(msg.into()).await
     }
