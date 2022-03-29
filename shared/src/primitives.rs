@@ -81,3 +81,10 @@ impl From<u32> for MilliSatoshi {
         Self(v as u64)
     }
 }
+
+wrapper! { Satoshi, u64 }
+impl From<u32> for Satoshi {
+    fn from(v: u32) -> Self {
+        Self(v as u64)
+    }
+}

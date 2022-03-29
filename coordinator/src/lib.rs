@@ -1,3 +1,4 @@
+mod bitcoind;
 mod bus;
 mod config;
 mod connector;
@@ -9,7 +10,6 @@ mod updates;
 
 use anyhow::Context;
 use bus::CoordinatorBus;
-use tokio::sync::mpsc;
 
 pub use config::CoordinatorConfig;
 use connector::Connectors;
