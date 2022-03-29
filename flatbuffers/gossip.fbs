@@ -1,8 +1,6 @@
-struct PubKey {
-  bytes:[ubyte:33];
-}
+include "shared.fbs";
 
-table NodeAnnouncement{
+table NodeAnnouncement {
   timestamp:uint32 = 0;
   node_id:PubKey;
 }

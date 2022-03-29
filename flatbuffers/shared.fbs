@@ -1,0 +1,3 @@
+struct PubKey {
+  bytes:[ubyte:33];
+}

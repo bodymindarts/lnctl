@@ -74,6 +74,7 @@ impl NodeClient for LndClient {
     }
 
     async fn list_channel_states(&mut self) -> anyhow::Result<Vec<ChannelState>> {
+        let node_client::NodeInfo { node_id, .. } = self.node_info().await?;
         let request = ListChannelsRequest {
             active_only: false,
             inactive_only: false,
@@ -112,6 +113,7 @@ impl NodeClient for LndClient {
             {
                 states.push(ChannelState {
                     short_channel_id: chan_id,
+                    local_node_id: node_id,
                     remote_node_id: remote_pubkey.parse()?,
                     active,
                     private,

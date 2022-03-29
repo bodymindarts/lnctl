@@ -89,17 +89,17 @@ impl From<LdkGossip> for proto::LnGossip {
     }
 }
 
-impl<'a> From<flat::GossipRecord<'a>> for Option<proto::LnGossip> {
-    fn from(record: flat::GossipRecord) -> Self {
+impl<'a> From<flat::gossip::GossipRecord<'a>> for Option<proto::LnGossip> {
+    fn from(record: flat::gossip::GossipRecord) -> Self {
         let msg = match record.msg_type() {
-            flat::Message::NodeAnnouncement => {
+            flat::gossip::Message::NodeAnnouncement => {
                 let node_announcement = record.msg_as_node_announcement().unwrap();
                 proto::ln_gossip::Message::NodeAnnouncement(proto::NodeAnnouncement {
                     timestamp: node_announcement.timestamp(),
                     node_id: hex_str(&node_announcement.node_id().unwrap().0),
                 })
             }
-            flat::Message::ChannelAnnouncement => {
+            flat::gossip::Message::ChannelAnnouncement => {
                 let channel_announcement = record.msg_as_channel_announcement().unwrap();
                 proto::ln_gossip::Message::ChannelAnnouncement(proto::ChannelAnnouncement {
                     short_channel_id: channel_announcement.short_channel_id(),
@@ -107,7 +107,7 @@ impl<'a> From<flat::GossipRecord<'a>> for Option<proto::LnGossip> {
                     node_b_id: hex_str(&channel_announcement.node_b_id().unwrap().0),
                 })
             }
-            flat::Message::ChannelUpdate => {
+            flat::gossip::Message::ChannelUpdate => {
                 let channel_update = record.msg_as_channel_update().unwrap();
                 let htlc_maximum_msat = channel_update.htlc_maximum_msat();
                 proto::ln_gossip::Message::ChannelUpdate(proto::ChannelUpdate {
@@ -136,11 +136,11 @@ impl<'a> From<flat::GossipRecord<'a>> for Option<proto::LnGossip> {
     }
 }
 
-impl From<flat::ChannelDirection> for proto::Direction {
-    fn from(direction: flat::ChannelDirection) -> Self {
+impl From<flat::gossip::ChannelDirection> for proto::Direction {
+    fn from(direction: flat::gossip::ChannelDirection) -> Self {
         match direction {
-            flat::ChannelDirection::AToB => proto::Direction::AToB,
-            flat::ChannelDirection::BToA => proto::Direction::BToA,
+            flat::gossip::ChannelDirection::AToB => proto::Direction::AToB,
+            flat::gossip::ChannelDirection::BToA => proto::Direction::BToA,
             _ => unimplemented!(),
         }
     }

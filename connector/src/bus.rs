@@ -28,6 +28,7 @@ pub(crate) struct ChannelSettings {
 #[derive(Clone, Debug)]
 pub(crate) struct ChannelState {
     pub short_channel_id: u64,
+    pub local_node_id: MonitoredNodeId,
     pub remote_node_id: NodeId,
     pub active: bool,
     pub private: bool,
@@ -41,8 +42,8 @@ pub(crate) struct ChannelState {
 
 #[derive(Clone, Debug)]
 pub(crate) struct ChannelScrape {
-    scraped_at: UnixTimestampSecs,
-    state: ChannelState,
+    pub scraped_at: UnixTimestampSecs,
+    pub state: ChannelState,
 }
 
 #[derive(Clone, Debug)]
@@ -109,6 +110,24 @@ mod convert {
 
         fn convert(msg: BusMessage) -> Option<Self> {
             if let BusMessage::LdkGossip(msg) = msg {
+                Some(msg)
+            } else {
+                None
+            }
+        }
+    }
+
+    impl BusSubscriber<BusMessage> for ChannelScrape {
+        fn filter(msg: &BusMessage) -> bool {
+            if let BusMessage::ChannelScrape(_) = msg {
+                true
+            } else {
+                false
+            }
+        }
+
+        fn convert(msg: BusMessage) -> Option<Self> {
+            if let BusMessage::ChannelScrape(msg) = msg {
                 Some(msg)
             } else {
                 None

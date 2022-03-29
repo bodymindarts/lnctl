@@ -1,3 +1,7 @@
+pub mod shared_generated {
+    include!("../../flatbuffers/gen/connector/shared_generated.rs");
+}
+
 mod bus;
 mod config;
 mod db;

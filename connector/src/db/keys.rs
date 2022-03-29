@@ -1,6 +1,6 @@
 use zerocopy::*;
 
-use crate::bus::LdkGossip;
+use crate::bus::{ChannelScrape, LdkGossip};
 
 #[derive(FromBytes, AsBytes, Unaligned)]
 #[repr(C)]
@@ -46,6 +46,19 @@ impl From<&LdkGossip> for GossipMessageKey {
                 update_counter: U32::new(*timestamp),
                 pubkey: [0; 33],
             },
+        }
+    }
+}
+
+#[derive(FromBytes, AsBytes, Unaligned)]
+#[repr(C)]
+pub struct ChannelStateKey {
+    short_channel_id: U64<BigEndian>,
+}
+impl From<&ChannelScrape> for ChannelStateKey {
+    fn from(scrape: &ChannelScrape) -> Self {
+        Self {
+            short_channel_id: U64::new(scrape.state.short_channel_id),
         }
     }
 }
