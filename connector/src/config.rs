@@ -31,6 +31,8 @@ pub struct ConnectorConfig {
     pub gossip: GossipConfig,
     #[serde(default = "default_data_dir")]
     pub data_dir: PathBuf,
+    #[serde(default = "default_scrape_interval")]
+    pub scrape_interval: u64,
 }
 
 fn default_server_port() -> u16 {
@@ -39,6 +41,10 @@ fn default_server_port() -> u16 {
 
 fn default_gossip_port() -> u16 {
     5635
+}
+
+fn default_scrape_interval() -> u64 {
+    30
 }
 
 fn default_data_dir() -> PathBuf {

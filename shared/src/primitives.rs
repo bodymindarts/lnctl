@@ -88,3 +88,8 @@ impl From<u32> for Satoshi {
         Self(v as u64)
     }
 }
+impl From<i64> for Satoshi {
+    fn from(v: i64) -> Self {
+        Self(v as u64)
+    }
+}

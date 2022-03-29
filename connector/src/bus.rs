@@ -1,7 +1,7 @@
 use lightning::ln::msgs::*;
 
 use crate::server::proto;
-use shared::{bus::MessageBus, primitives::UnixTimestampSecs};
+use shared::{bus::MessageBus, primitives::*};
 
 #[derive(Clone, Debug)]
 pub(crate) enum LdkGossip {
@@ -20,9 +20,36 @@ pub(crate) enum LdkGossip {
 }
 
 #[derive(Clone, Debug)]
+pub(crate) struct ChannelSettings {
+    pub chan_reserve_sat: Satoshi,
+    pub min_htlc_msat: MilliSatoshi,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct ChannelState {
+    pub short_channel_id: u64,
+    pub remote_node_id: NodeId,
+    pub active: bool,
+    pub private: bool,
+    pub capacity: Satoshi,
+    pub local_balance: Satoshi,
+    pub remote_balance: Satoshi,
+    pub unsettled_balance: Satoshi,
+    pub local_channel_settings: ChannelSettings,
+    pub remote_channel_settings: ChannelSettings,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct ChannelScrape {
+    scraped_at: UnixTimestampSecs,
+    state: ChannelState,
+}
+
+#[derive(Clone, Debug)]
 pub(crate) enum BusMessage {
     LdkGossip(LdkGossip),
     NodeEvent(proto::NodeEvent),
+    ChannelScrape(ChannelScrape),
 }
 
 pub(crate) type ConnectorBus = MessageBus<BusMessage>;
@@ -30,6 +57,15 @@ pub(crate) type ConnectorBus = MessageBus<BusMessage>;
 mod convert {
     use super::*;
     use shared::bus::*;
+
+    impl From<ChannelState> for BusMessage {
+        fn from(channel_state: ChannelState) -> Self {
+            BusMessage::ChannelScrape(ChannelScrape {
+                scraped_at: UnixTimestampSecs::now(),
+                state: channel_state,
+            })
+        }
+    }
 
     impl From<&NodeAnnouncement> for BusMessage {
         fn from(msg: &NodeAnnouncement) -> Self {

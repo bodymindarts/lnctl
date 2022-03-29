@@ -11,7 +11,10 @@ pub mod node_client;
 
 use anyhow::Context;
 use std::sync::Arc;
-use tokio::sync::RwLock;
+use tokio::{
+    sync::RwLock,
+    time::{self, Duration},
+};
 
 use bus::ConnectorBus;
 pub use config::ConnectorConfig;
@@ -43,15 +46,50 @@ pub async fn run(config: ConnectorConfig) -> anyhow::Result<()> {
             format!("{}:{}", config.gossip.host, config.gossip.port),
         )
         .await?;
+    let client = Arc::new(RwLock::new(client));
+    spawn_channel_scraping(
+        Duration::from_secs(config.scrape_interval),
+        bus.clone(),
+        client.clone(),
+    );
 
     server::run_server(
         config.server,
         connector_id,
         node_info.node_id,
         bus,
-        Arc::new(RwLock::new(client)),
+        client,
         db,
     )
     .await?;
     Ok(())
+}
+
+fn spawn_channel_scraping(
+    interval: Duration,
+    bus: ConnectorBus,
+    client: Arc<RwLock<dyn NodeClient + Send + Sync + 'static>>,
+) {
+    tokio::spawn(async move {
+        let mut interval = time::interval(interval);
+        loop {
+            let channels = {
+                let mut client = client.write().await;
+                match client.list_channel_states().await {
+                    Err(e) => {
+                        eprintln!("Error listing channels: {}", e);
+                        interval.tick().await;
+                        continue;
+                    }
+                    Ok(channels) => channels,
+                }
+            };
+            for channel in channels {
+                if let Err(e) = bus.dispatch(channel).await {
+                    eprintln!("Error dispatching channel: {}", e);
+                }
+            }
+            interval.tick().await;
+        }
+    });
 }

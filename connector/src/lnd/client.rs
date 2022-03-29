@@ -4,10 +4,13 @@ use std::str::FromStr;
 use tonic_lnd::{rpc::*, Client as InnerClient};
 
 use super::config::LndConnectorConfig;
-use crate::node_client::{self, NodeClient, NodeType};
+use crate::{
+    bus::{ChannelSettings, ChannelState},
+    node_client::{self, NodeClient, NodeType},
+};
 use shared::primitives::*;
 
-pub struct LndClient {
+pub(crate) struct LndClient {
     inner: InnerClient,
 }
 
@@ -68,5 +71,65 @@ impl NodeClient for LndClient {
         };
         let _ = self.inner.connect_peer(request).await?;
         Ok(())
+    }
+
+    async fn list_channel_states(&mut self) -> anyhow::Result<Vec<ChannelState>> {
+        let request = ListChannelsRequest {
+            active_only: false,
+            inactive_only: false,
+            public_only: false,
+            private_only: false,
+            peer: Vec::new(),
+        };
+        let response = self.inner.list_channels(request).await?;
+        let mut states = Vec::new();
+        for channel in response.into_inner().channels {
+            let Channel {
+                chan_id,
+                remote_pubkey,
+                active,
+                capacity,
+                local_balance,
+                remote_balance,
+                unsettled_balance,
+                private,
+                local_constraints,
+                remote_constraints,
+                ..
+            } = channel;
+            if let (
+                Some(ChannelConstraints {
+                    chan_reserve_sat: local_reserve_sat,
+                    min_htlc_msat: local_min_htlc_msat,
+                    ..
+                }),
+                Some(ChannelConstraints {
+                    chan_reserve_sat: remote_reserve_sat,
+                    min_htlc_msat: remote_min_htlc_msat,
+                    ..
+                }),
+            ) = (local_constraints, remote_constraints)
+            {
+                states.push(ChannelState {
+                    short_channel_id: chan_id,
+                    remote_node_id: remote_pubkey.parse()?,
+                    active,
+                    private,
+                    capacity: capacity.into(),
+                    local_balance: local_balance.into(),
+                    remote_balance: remote_balance.into(),
+                    unsettled_balance: unsettled_balance.into(),
+                    local_channel_settings: ChannelSettings {
+                        chan_reserve_sat: local_reserve_sat.into(),
+                        min_htlc_msat: local_min_htlc_msat.into(),
+                    },
+                    remote_channel_settings: ChannelSettings {
+                        chan_reserve_sat: remote_reserve_sat.into(),
+                        min_htlc_msat: remote_min_htlc_msat.into(),
+                    },
+                });
+            }
+        }
+        Ok(states)
     }
 }

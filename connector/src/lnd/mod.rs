@@ -1,9 +1,9 @@
 mod client;
 mod config;
 
-pub use client::LndClient;
+pub(crate) use client::LndClient;
 pub use config::LndConnectorConfig;
 
-pub async fn run(config: LndConnectorConfig) -> anyhow::Result<LndClient> {
+pub(crate) async fn run(config: LndConnectorConfig) -> anyhow::Result<LndClient> {
     LndClient::new(config).await
 }

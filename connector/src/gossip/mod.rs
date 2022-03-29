@@ -7,7 +7,6 @@ use lightning::ln::peer_handler::{
 use lightning_net_tokio::SocketDescriptor;
 use rand::Rng;
 use std::sync::Arc;
-use tokio::sync::mpsc;
 
 use crate::bus::ConnectorBus;
 use forwarder::RoutingMessageForwarder;
