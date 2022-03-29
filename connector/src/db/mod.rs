@@ -31,11 +31,7 @@ impl Db {
             while let Some(msg) = stream.next().await {
                 let key = GossipMessageKey::from(&msg);
                 let finished_bytes = FinishedBytes::from((&mut buffer, msg));
-                if let Err(e) = gossip_db.compare_and_swap(
-                    key.as_bytes(),
-                    None as Option<&[u8]>,
-                    Some(*finished_bytes),
-                ) {
+                if let Err(e) = gossip_db.insert(key.as_bytes(), *finished_bytes) {
                     eprintln!("Couldn't persist gossip: {}", e);
                 }
             }

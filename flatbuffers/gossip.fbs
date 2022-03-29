@@ -3,6 +3,7 @@ struct PubKey {
 }
 
 table NodeAnnouncement{
+  timestamp:uint32 = 0;
   node_id:PubKey;
 }
 
@@ -15,8 +16,8 @@ table ChannelAnnouncement {
 enum ChannelDirection:uint8 { AToB, BToA }
 
 table ChannelUpdate {
+  timestamp:uint32 = 0;
   short_channel_id:uint64;
-  update_counter:uint32 = 0;
   channel_enabled:bool = true;
   direction:ChannelDirection;
   cltv_expiry_delta:uint16;

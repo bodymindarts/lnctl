@@ -1,6 +1,6 @@
 use super::proto;
-use crate::{bus::*, node_client::NodeType};
-use shared::bus::BusSubscriber;
+use crate::{bus::*, db::flat, node_client::NodeType};
+use shared::{bus::BusSubscriber, utils::hex_str};
 
 impl From<LdkGossip> for proto::LnGossip {
     fn from(msg: LdkGossip) -> Self {
@@ -8,11 +8,15 @@ impl From<LdkGossip> for proto::LnGossip {
         match msg {
             LdkGossip::NodeAnnouncement {
                 received_at,
-                msg: UnsignedNodeAnnouncement { node_id, .. },
+                msg:
+                    UnsignedNodeAnnouncement {
+                        timestamp, node_id, ..
+                    },
             } => proto::LnGossip {
                 received_at: received_at.into(),
                 message: Some(proto::ln_gossip::Message::NodeAnnouncement(
                     proto::NodeAnnouncement {
+                        timestamp,
                         node_id: node_id.to_string(),
                     },
                 )),
@@ -63,7 +67,7 @@ impl From<LdkGossip> for proto::LnGossip {
                     message: Some(proto::ln_gossip::Message::ChannelUpdate(
                         proto::ChannelUpdate {
                             short_channel_id,
-                            update_counter: timestamp,
+                            timestamp,
                             channel_direction: direction as i32,
                             channel_enabled,
                             cltv_expiry_delta: cltv_expiry_delta as u32,
@@ -81,6 +85,63 @@ impl From<LdkGossip> for proto::LnGossip {
                     )),
                 }
             }
+        }
+    }
+}
+
+impl<'a> From<flat::GossipRecord<'a>> for Option<proto::LnGossip> {
+    fn from(record: flat::GossipRecord) -> Self {
+        let msg = match record.msg_type() {
+            flat::Message::NodeAnnouncement => {
+                let node_announcement = record.msg_as_node_announcement().unwrap();
+                proto::ln_gossip::Message::NodeAnnouncement(proto::NodeAnnouncement {
+                    timestamp: node_announcement.timestamp(),
+                    node_id: hex_str(&node_announcement.node_id().unwrap().0),
+                })
+            }
+            flat::Message::ChannelAnnouncement => {
+                let channel_announcement = record.msg_as_channel_announcement().unwrap();
+                proto::ln_gossip::Message::ChannelAnnouncement(proto::ChannelAnnouncement {
+                    short_channel_id: channel_announcement.short_channel_id(),
+                    node_a_id: hex_str(&channel_announcement.node_a_id().unwrap().0),
+                    node_b_id: hex_str(&channel_announcement.node_b_id().unwrap().0),
+                })
+            }
+            flat::Message::ChannelUpdate => {
+                let channel_update = record.msg_as_channel_update().unwrap();
+                let htlc_maximum_msat = channel_update.htlc_maximum_msat();
+                proto::ln_gossip::Message::ChannelUpdate(proto::ChannelUpdate {
+                    short_channel_id: channel_update.short_channel_id(),
+                    timestamp: channel_update.timestamp(),
+                    channel_enabled: channel_update.channel_enabled(),
+                    channel_direction: proto::Direction::from(channel_update.direction()) as i32,
+                    cltv_expiry_delta: channel_update.cltv_expiry_delta().into(),
+                    htlc_minimum_msat: channel_update.htlc_minimum_msat(),
+                    htlc_maximum_msat: if htlc_maximum_msat > 0 {
+                        Some(htlc_maximum_msat)
+                    } else {
+                        None
+                    },
+                    fee_base_msat: channel_update.fee_base_msat(),
+                    fee_proportional_millionths: channel_update.fee_proportional_millionths(),
+                })
+            }
+            _ => return None,
+        };
+
+        Some(proto::LnGossip {
+            received_at: record.received_at(),
+            message: Some(msg),
+        })
+    }
+}
+
+impl From<flat::ChannelDirection> for proto::Direction {
+    fn from(direction: flat::ChannelDirection) -> Self {
+        match direction {
+            flat::ChannelDirection::AToB => proto::Direction::AToB,
+            flat::ChannelDirection::BToA => proto::Direction::BToA,
+            _ => unimplemented!(),
         }
     }
 }

@@ -32,16 +32,17 @@ message LnGossip {
   }
 }
 message NodeAnnouncement {
-  string node_id = 1;
+  uint32 timestamp = 1;
+  string node_id = 2;
 }
 message ChannelAnnouncement {
-  uint64 short_channel_id = 1;
-  string node_a_id = 2;
-  string node_b_id = 3;
+  uint64 short_channel_id = 2;
+  string node_a_id = 4;
+  string node_b_id = 5;
 }
 message ChannelUpdate {
-  uint64 short_channel_id = 1;
-  uint32 update_counter = 2;
+  uint32 timestamp = 1;
+  uint64 short_channel_id = 2;
   Direction channel_direction = 3;
   bool channel_enabled = 4;
   uint32 cltv_expiry_delta = 5;

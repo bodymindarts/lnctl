@@ -302,11 +302,17 @@ impl<'a> NodeAnnouncement<'a> {
         args: &'args NodeAnnouncementArgs<'args>) -> flatbuffers::WIPOffset<NodeAnnouncement<'bldr>> {
       let mut builder = NodeAnnouncementBuilder::new(_fbb);
       if let Some(x) = args.node_id { builder.add_node_id(x); }
+      builder.add_timestamp(args.timestamp);
       builder.finish()
     }
 
-    pub const VT_NODE_ID: flatbuffers::VOffsetT = 4;
+    pub const VT_TIMESTAMP: flatbuffers::VOffsetT = 4;
+    pub const VT_NODE_ID: flatbuffers::VOffsetT = 6;
 
+  #[inline]
+  pub fn timestamp(&self) -> u32 {
+    self._tab.get::<u32>(NodeAnnouncement::VT_TIMESTAMP, Some(0)).unwrap()
+  }
   #[inline]
   pub fn node_id(&self) -> Option<&'a PubKey> {
     self._tab.get::<PubKey>(NodeAnnouncement::VT_NODE_ID, None)
@@ -320,18 +326,21 @@ impl flatbuffers::Verifiable for NodeAnnouncement<'_> {
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
     use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
+     .visit_field::<u32>(&"timestamp", Self::VT_TIMESTAMP, false)?
      .visit_field::<PubKey>(&"node_id", Self::VT_NODE_ID, false)?
      .finish();
     Ok(())
   }
 }
 pub struct NodeAnnouncementArgs<'a> {
+    pub timestamp: u32,
     pub node_id: Option<&'a PubKey>,
 }
 impl<'a> Default for NodeAnnouncementArgs<'a> {
     #[inline]
     fn default() -> Self {
         NodeAnnouncementArgs {
+            timestamp: 0,
             node_id: None,
         }
     }
@@ -341,6 +350,10 @@ pub struct NodeAnnouncementBuilder<'a: 'b, 'b> {
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b> NodeAnnouncementBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_timestamp(&mut self, timestamp: u32) {
+    self.fbb_.push_slot::<u32>(NodeAnnouncement::VT_TIMESTAMP, timestamp, 0);
+  }
   #[inline]
   pub fn add_node_id(&mut self, node_id: &PubKey) {
     self.fbb_.push_slot_always::<&PubKey>(NodeAnnouncement::VT_NODE_ID, node_id);
@@ -363,6 +376,7 @@ impl<'a: 'b, 'b> NodeAnnouncementBuilder<'a, 'b> {
 impl std::fmt::Debug for NodeAnnouncement<'_> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let mut ds = f.debug_struct("NodeAnnouncement");
+      ds.field("timestamp", &self.timestamp());
       ds.field("node_id", &self.node_id());
       ds.finish()
   }
@@ -516,15 +530,15 @@ impl<'a> ChannelUpdate<'a> {
       builder.add_short_channel_id(args.short_channel_id);
       builder.add_fee_proportional_millionths(args.fee_proportional_millionths);
       builder.add_fee_base_msat(args.fee_base_msat);
-      builder.add_update_counter(args.update_counter);
+      builder.add_timestamp(args.timestamp);
       builder.add_cltv_expiry_delta(args.cltv_expiry_delta);
       builder.add_direction(args.direction);
       builder.add_channel_enabled(args.channel_enabled);
       builder.finish()
     }
 
-    pub const VT_SHORT_CHANNEL_ID: flatbuffers::VOffsetT = 4;
-    pub const VT_UPDATE_COUNTER: flatbuffers::VOffsetT = 6;
+    pub const VT_TIMESTAMP: flatbuffers::VOffsetT = 4;
+    pub const VT_SHORT_CHANNEL_ID: flatbuffers::VOffsetT = 6;
     pub const VT_CHANNEL_ENABLED: flatbuffers::VOffsetT = 8;
     pub const VT_DIRECTION: flatbuffers::VOffsetT = 10;
     pub const VT_CLTV_EXPIRY_DELTA: flatbuffers::VOffsetT = 12;
@@ -534,12 +548,12 @@ impl<'a> ChannelUpdate<'a> {
     pub const VT_FEE_PROPORTIONAL_MILLIONTHS: flatbuffers::VOffsetT = 20;
 
   #[inline]
-  pub fn short_channel_id(&self) -> u64 {
-    self._tab.get::<u64>(ChannelUpdate::VT_SHORT_CHANNEL_ID, Some(0)).unwrap()
+  pub fn timestamp(&self) -> u32 {
+    self._tab.get::<u32>(ChannelUpdate::VT_TIMESTAMP, Some(0)).unwrap()
   }
   #[inline]
-  pub fn update_counter(&self) -> u32 {
-    self._tab.get::<u32>(ChannelUpdate::VT_UPDATE_COUNTER, Some(0)).unwrap()
+  pub fn short_channel_id(&self) -> u64 {
+    self._tab.get::<u64>(ChannelUpdate::VT_SHORT_CHANNEL_ID, Some(0)).unwrap()
   }
   #[inline]
   pub fn channel_enabled(&self) -> bool {
@@ -578,8 +592,8 @@ impl flatbuffers::Verifiable for ChannelUpdate<'_> {
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
     use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
+     .visit_field::<u32>(&"timestamp", Self::VT_TIMESTAMP, false)?
      .visit_field::<u64>(&"short_channel_id", Self::VT_SHORT_CHANNEL_ID, false)?
-     .visit_field::<u32>(&"update_counter", Self::VT_UPDATE_COUNTER, false)?
      .visit_field::<bool>(&"channel_enabled", Self::VT_CHANNEL_ENABLED, false)?
      .visit_field::<ChannelDirection>(&"direction", Self::VT_DIRECTION, false)?
      .visit_field::<u16>(&"cltv_expiry_delta", Self::VT_CLTV_EXPIRY_DELTA, false)?
@@ -592,8 +606,8 @@ impl flatbuffers::Verifiable for ChannelUpdate<'_> {
   }
 }
 pub struct ChannelUpdateArgs {
+    pub timestamp: u32,
     pub short_channel_id: u64,
-    pub update_counter: u32,
     pub channel_enabled: bool,
     pub direction: ChannelDirection,
     pub cltv_expiry_delta: u16,
@@ -606,8 +620,8 @@ impl<'a> Default for ChannelUpdateArgs {
     #[inline]
     fn default() -> Self {
         ChannelUpdateArgs {
+            timestamp: 0,
             short_channel_id: 0,
-            update_counter: 0,
             channel_enabled: true,
             direction: ChannelDirection::AToB,
             cltv_expiry_delta: 0,
@@ -624,12 +638,12 @@ pub struct ChannelUpdateBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> ChannelUpdateBuilder<'a, 'b> {
   #[inline]
-  pub fn add_short_channel_id(&mut self, short_channel_id: u64) {
-    self.fbb_.push_slot::<u64>(ChannelUpdate::VT_SHORT_CHANNEL_ID, short_channel_id, 0);
+  pub fn add_timestamp(&mut self, timestamp: u32) {
+    self.fbb_.push_slot::<u32>(ChannelUpdate::VT_TIMESTAMP, timestamp, 0);
   }
   #[inline]
-  pub fn add_update_counter(&mut self, update_counter: u32) {
-    self.fbb_.push_slot::<u32>(ChannelUpdate::VT_UPDATE_COUNTER, update_counter, 0);
+  pub fn add_short_channel_id(&mut self, short_channel_id: u64) {
+    self.fbb_.push_slot::<u64>(ChannelUpdate::VT_SHORT_CHANNEL_ID, short_channel_id, 0);
   }
   #[inline]
   pub fn add_channel_enabled(&mut self, channel_enabled: bool) {
@@ -677,8 +691,8 @@ impl<'a: 'b, 'b> ChannelUpdateBuilder<'a, 'b> {
 impl std::fmt::Debug for ChannelUpdate<'_> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let mut ds = f.debug_struct("ChannelUpdate");
+      ds.field("timestamp", &self.timestamp());
       ds.field("short_channel_id", &self.short_channel_id());
-      ds.field("update_counter", &self.update_counter());
       ds.field("channel_enabled", &self.channel_enabled());
       ds.field("direction", &self.direction());
       ds.field("cltv_expiry_delta", &self.cltv_expiry_delta());
