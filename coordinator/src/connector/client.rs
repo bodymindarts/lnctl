@@ -3,15 +3,14 @@ pub mod proto {
 }
 
 use anyhow::Context;
-use tokio::sync::mpsc;
 use tonic::transport::channel::Channel;
 
 use self::proto::*;
-use super::message::ConnectorMessage;
+use crate::bus::*;
 use shared::primitives::*;
 pub type LnCtlConnectorClient = lnctl_connector_client::LnctlConnectorClient<Channel>;
 
-pub struct ConnectorClient {
+pub(crate) struct ConnectorClient {
     pub connector_id: ConnectorId,
     pub monitored_node_id: MonitoredNodeId,
     pub address: String,
@@ -19,17 +18,14 @@ pub struct ConnectorClient {
 }
 
 impl ConnectorClient {
-    pub async fn connect(
-        address: &str,
-        messages: mpsc::Sender<ConnectorMessage>,
-    ) -> anyhow::Result<Self> {
+    pub async fn connect(address: &str, bus: CoordinatorBus) -> anyhow::Result<Self> {
         let mut client = LnCtlConnectorClient::connect(format!("http://{}", address))
             .await
             .context("couldn't establish connection")?;
         let status = client.get_status(GetStatusRequest {}).await?.into_inner();
         let connector_id = status.connector_id.parse()?;
         let monitored_node_id = status.monitored_node_id.parse()?;
-        Self::spawn_messages_stream(messages, client, connector_id, monitored_node_id);
+        Self::spawn_messages_stream(bus, client, connector_id, monitored_node_id);
         Ok(Self {
             connector_id,
             r#type: proto::ConnectorType::from_i32(status.r#type)
@@ -41,7 +37,7 @@ impl ConnectorClient {
     }
 
     fn spawn_messages_stream(
-        messages: mpsc::Sender<ConnectorMessage>,
+        bus: CoordinatorBus,
         mut client: LnCtlConnectorClient,
         connector_id: ConnectorId,
         monitored_node_id: MonitoredNodeId,
@@ -50,8 +46,8 @@ impl ConnectorClient {
             if let Ok(response) = client.stream_node_events(StreamNodeEventsRequest {}).await {
                 let mut stream = response.into_inner();
                 while let Ok(Some(node_event)) = stream.message().await {
-                    if let Err(_) = messages
-                        .send(ConnectorMessage {
+                    if let Err(_) = bus
+                        .dispatch(BusMessage::ConnectorMessage {
                             connector_id: connector_id.clone(),
                             monitored_node_id: monitored_node_id.clone(),
                             node_event,

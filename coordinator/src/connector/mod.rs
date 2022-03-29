@@ -1,27 +1,24 @@
 mod client;
 mod file;
-mod message;
+
+pub use client::proto;
 
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 use tokio::sync::{mpsc, RwLock, RwLockReadGuard};
-use uuid::Uuid;
 
-pub use client::ConnectorClient;
-pub use message::ConnectorMessage;
+use crate::bus::CoordinatorBus;
+pub(crate) use client::ConnectorClient;
 use shared::primitives::ConnectorId;
 
-pub struct Connectors {
+pub(crate) struct Connectors {
     inner: Arc<RwLock<HashMap<ConnectorId, ConnectorClient>>>,
 }
 
 impl Connectors {
-    pub async fn new(
-        connectors_file: PathBuf,
-        sender: mpsc::Sender<ConnectorMessage>,
-    ) -> anyhow::Result<Self> {
+    pub async fn new(connectors_file: PathBuf, bus: CoordinatorBus) -> anyhow::Result<Self> {
         let file_changes = file::watch(connectors_file).await?;
         let connectors = Arc::new(RwLock::new(HashMap::new()));
-        Self::spawn_connect_from_list(Arc::clone(&connectors), sender, file_changes);
+        Self::spawn_connect_from_list(Arc::clone(&connectors), bus, file_changes);
         Ok(Self { inner: connectors })
     }
 
@@ -31,7 +28,7 @@ impl Connectors {
 
     fn spawn_connect_from_list(
         connectors: Arc<RwLock<HashMap<ConnectorId, ConnectorClient>>>,
-        sender: mpsc::Sender<ConnectorMessage>,
+        bus: CoordinatorBus,
         mut file_changes: mpsc::Receiver<Vec<String>>,
     ) {
         tokio::spawn(async move {
@@ -48,7 +45,7 @@ impl Connectors {
                 for address in list.drain(..) {
                     if !existing_addresses.contains(&address) {
                         println!("Connecting to {}", address);
-                        match ConnectorClient::connect(&address, sender.clone()).await {
+                        match ConnectorClient::connect(&address, bus.clone()).await {
                             Ok(con) => {
                                 println!(
                                     "Connection to connector {} established @ {}",

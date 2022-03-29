@@ -44,7 +44,7 @@ impl LnctlCoordinator for CoordinatorServer {
     }
 }
 
-pub async fn run_server(
+pub(crate) async fn run_server(
     config: ServerConfig,
     id: Uuid,
     connectors: Connectors,
