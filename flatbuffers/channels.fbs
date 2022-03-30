@@ -23,3 +23,5 @@ table ChannelScrape {
   scrape_timestamp:uint64;
   state:ChannelState;
 }
+
+root_type ChannelScrape;

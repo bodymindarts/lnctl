@@ -123,11 +123,11 @@ impl NodeClient for LndClient {
                     unsettled_balance: unsettled_balance.into(),
                     local_channel_settings: ChannelSettings {
                         chan_reserve_sat: local_reserve_sat.into(),
-                        min_htlc_msat: local_min_htlc_msat.into(),
+                        htlc_minimum_msat: local_min_htlc_msat.into(),
                     },
                     remote_channel_settings: ChannelSettings {
                         chan_reserve_sat: remote_reserve_sat.into(),
-                        min_htlc_msat: remote_min_htlc_msat.into(),
+                        htlc_minimum_msat: remote_min_htlc_msat.into(),
                     },
                 });
             }

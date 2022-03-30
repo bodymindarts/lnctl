@@ -22,7 +22,7 @@ pub(crate) enum LdkGossip {
 #[derive(Clone, Debug)]
 pub(crate) struct ChannelSettings {
     pub chan_reserve_sat: Satoshi,
-    pub min_htlc_msat: MilliSatoshi,
+    pub htlc_minimum_msat: MilliSatoshi,
 }
 
 #[derive(Clone, Debug)]
@@ -47,10 +47,16 @@ pub(crate) struct ChannelScrape {
 }
 
 #[derive(Clone, Debug)]
+pub(crate) struct MonitoredChannelUpdate {
+    pub scrape: ChannelScrape,
+}
+
+#[derive(Clone, Debug)]
 pub(crate) enum BusMessage {
-    LdkGossip(LdkGossip),
     NodeEvent(proto::NodeEvent),
+    LdkGossip(LdkGossip),
     ChannelScrape(ChannelScrape),
+    ChannelUpdate(MonitoredChannelUpdate),
 }
 
 pub(crate) type ConnectorBus = MessageBus<BusMessage>;
@@ -65,6 +71,12 @@ mod convert {
                 scraped_at: UnixTimestampSecs::now(),
                 state: channel_state,
             })
+        }
+    }
+
+    impl From<MonitoredChannelUpdate> for BusMessage {
+        fn from(update: MonitoredChannelUpdate) -> Self {
+            BusMessage::ChannelUpdate(update)
         }
     }
 

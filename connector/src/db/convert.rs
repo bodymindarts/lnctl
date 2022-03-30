@@ -139,12 +139,12 @@ impl<'a> From<(&'a mut flatbuffers::FlatBufferBuilder<'_>, ChannelScrape)> for F
                     local_channel_settings:
                         ChannelSettings {
                             chan_reserve_sat: local_channel_reserve_sat,
-                            min_htlc_msat: local_htlc_minimum_msat,
+                            htlc_minimum_msat: local_htlc_minimum_msat,
                         },
                     remote_channel_settings:
                         ChannelSettings {
                             chan_reserve_sat: remote_channel_reserve_sat,
-                            min_htlc_msat: remote_htlc_minimum_msat,
+                            htlc_minimum_msat: remote_htlc_minimum_msat,
                         },
                 },
         } = msg;

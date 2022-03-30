@@ -450,3 +450,86 @@ impl std::fmt::Debug for ChannelScrape<'_> {
       ds.finish()
   }
 }
+#[inline]
+#[deprecated(since="2.0.0", note="Deprecated in favor of `root_as...` methods.")]
+pub fn get_root_as_channel_scrape<'a>(buf: &'a [u8]) -> ChannelScrape<'a> {
+  unsafe { flatbuffers::root_unchecked::<ChannelScrape<'a>>(buf) }
+}
+
+#[inline]
+#[deprecated(since="2.0.0", note="Deprecated in favor of `root_as...` methods.")]
+pub fn get_size_prefixed_root_as_channel_scrape<'a>(buf: &'a [u8]) -> ChannelScrape<'a> {
+  unsafe { flatbuffers::size_prefixed_root_unchecked::<ChannelScrape<'a>>(buf) }
+}
+
+#[inline]
+/// Verifies that a buffer of bytes contains a `ChannelScrape`
+/// and returns it.
+/// Note that verification is still experimental and may not
+/// catch every error, or be maximally performant. For the
+/// previous, unchecked, behavior use
+/// `root_as_channel_scrape_unchecked`.
+pub fn root_as_channel_scrape(buf: &[u8]) -> Result<ChannelScrape, flatbuffers::InvalidFlatbuffer> {
+  flatbuffers::root::<ChannelScrape>(buf)
+}
+#[inline]
+/// Verifies that a buffer of bytes contains a size prefixed
+/// `ChannelScrape` and returns it.
+/// Note that verification is still experimental and may not
+/// catch every error, or be maximally performant. For the
+/// previous, unchecked, behavior use
+/// `size_prefixed_root_as_channel_scrape_unchecked`.
+pub fn size_prefixed_root_as_channel_scrape(buf: &[u8]) -> Result<ChannelScrape, flatbuffers::InvalidFlatbuffer> {
+  flatbuffers::size_prefixed_root::<ChannelScrape>(buf)
+}
+#[inline]
+/// Verifies, with the given options, that a buffer of bytes
+/// contains a `ChannelScrape` and returns it.
+/// Note that verification is still experimental and may not
+/// catch every error, or be maximally performant. For the
+/// previous, unchecked, behavior use
+/// `root_as_channel_scrape_unchecked`.
+pub fn root_as_channel_scrape_with_opts<'b, 'o>(
+  opts: &'o flatbuffers::VerifierOptions,
+  buf: &'b [u8],
+) -> Result<ChannelScrape<'b>, flatbuffers::InvalidFlatbuffer> {
+  flatbuffers::root_with_opts::<ChannelScrape<'b>>(opts, buf)
+}
+#[inline]
+/// Verifies, with the given verifier options, that a buffer of
+/// bytes contains a size prefixed `ChannelScrape` and returns
+/// it. Note that verification is still experimental and may not
+/// catch every error, or be maximally performant. For the
+/// previous, unchecked, behavior use
+/// `root_as_channel_scrape_unchecked`.
+pub fn size_prefixed_root_as_channel_scrape_with_opts<'b, 'o>(
+  opts: &'o flatbuffers::VerifierOptions,
+  buf: &'b [u8],
+) -> Result<ChannelScrape<'b>, flatbuffers::InvalidFlatbuffer> {
+  flatbuffers::size_prefixed_root_with_opts::<ChannelScrape<'b>>(opts, buf)
+}
+#[inline]
+/// Assumes, without verification, that a buffer of bytes contains a ChannelScrape and returns it.
+/// # Safety
+/// Callers must trust the given bytes do indeed contain a valid `ChannelScrape`.
+pub unsafe fn root_as_channel_scrape_unchecked(buf: &[u8]) -> ChannelScrape {
+  flatbuffers::root_unchecked::<ChannelScrape>(buf)
+}
+#[inline]
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed ChannelScrape and returns it.
+/// # Safety
+/// Callers must trust the given bytes do indeed contain a valid size prefixed `ChannelScrape`.
+pub unsafe fn size_prefixed_root_as_channel_scrape_unchecked(buf: &[u8]) -> ChannelScrape {
+  flatbuffers::size_prefixed_root_unchecked::<ChannelScrape>(buf)
+}
+#[inline]
+pub fn finish_channel_scrape_buffer<'a, 'b>(
+    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+    root: flatbuffers::WIPOffset<ChannelScrape<'a>>) {
+  fbb.finish(root, None);
+}
+
+#[inline]
+pub fn finish_size_prefixed_channel_scrape_buffer<'a, 'b>(fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>, root: flatbuffers::WIPOffset<ChannelScrape<'a>>) {
+  fbb.finish_size_prefixed(root, None);
+}
