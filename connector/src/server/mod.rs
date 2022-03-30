@@ -55,6 +55,22 @@ impl ConnectorServer {
                 }
             }
         });
+        let channel_update_bus = bus.clone();
+        tokio::spawn(async move {
+            let mut stream = channel_update_bus
+                .subscribe::<proto::MonitoredChannelUpdate>()
+                .await;
+            while let Some(scrape) = stream.next().await {
+                if let Err(e) = channel_update_bus
+                    .dispatch(proto::NodeEvent {
+                        event: Some(proto::node_event::Event::ChannelUpdate(scrape)),
+                    })
+                    .await
+                {
+                    eprintln!("Could not dispatch: {:?}", e);
+                }
+            }
+        });
         Self {
             connector_id,
             monitored_node_id: node_pubkey,
@@ -85,12 +101,19 @@ impl LnctlConnector for ConnectorServer {
         &self,
         _request: Request<StreamNodeEventsRequest>,
     ) -> ConnectorResponse<Self::StreamNodeEventsStream> {
-        let stream = self.db.load_gossip();
-        let output_stream = stream
-            .map(|gossip| proto::NodeEvent {
-                event: Some(proto::node_event::Event::Gossip(gossip)),
+        let gossip_stream = self.db.load_gossip();
+        let channels_stream = self.db.load_channels();
+        let output_stream = channels_stream
+            .map(|scrape| proto::NodeEvent {
+                event: Some(proto::node_event::Event::ChannelUpdate(scrape)),
             })
-            .chain(self.bus.subscribe::<proto::NodeEvent>().await)
+            .chain(
+                gossip_stream
+                    .map(|gossip| proto::NodeEvent {
+                        event: Some(proto::node_event::Event::Gossip(gossip)),
+                    })
+                    .chain(self.bus.subscribe::<proto::NodeEvent>().await),
+            )
             .map(|event| Ok(event));
         Ok(Response::new(
             Box::pin(output_stream) as Self::StreamNodeEventsStream

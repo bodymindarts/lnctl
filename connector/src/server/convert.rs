@@ -138,6 +138,106 @@ impl<'a> TryFrom<flat::gossip::GossipRecord<'a>> for proto::LnGossip {
     }
 }
 
+impl<'a> TryFrom<flat::channels::ChannelScrape<'a>> for proto::MonitoredChannelUpdate {
+    type Error = ();
+
+    fn try_from(channel_scrape: flat::channels::ChannelScrape<'a>) -> Result<Self, Self::Error> {
+        if let Some(channel_state) = channel_scrape.state() {
+            Ok(proto::MonitoredChannelUpdate {
+                timestamp: channel_scrape.scrape_timestamp(),
+                channel_state: Some(proto::ChannelState {
+                    short_channel_id: channel_state.short_channel_id(),
+                    local_node_id: hex_str(&channel_state.local_node_id().unwrap().0),
+                    remote_node_id: hex_str(&channel_state.remote_node_id().unwrap().0),
+                    active: channel_state.active(),
+                    private: channel_state.private(),
+                    capacity: channel_state.capacity(),
+                    local_balance: channel_state.local_balance(),
+                    remote_balance: channel_state.remote_balance(),
+                    unsettled_balance: channel_state.unsettled_balance(),
+                    local_channel_settings: Some(proto::ChannelSettings {
+                        chan_reserve_sat: channel_state
+                            .local_channel_settings()
+                            .unwrap()
+                            .chan_reserve_sat(),
+                        htlc_minimum_msat: channel_state
+                            .local_channel_settings()
+                            .unwrap()
+                            .htlc_minimum_msat(),
+                    }),
+                    remote_channel_settings: Some(proto::ChannelSettings {
+                        chan_reserve_sat: channel_state
+                            .remote_channel_settings()
+                            .unwrap()
+                            .chan_reserve_sat(),
+                        htlc_minimum_msat: channel_state
+                            .remote_channel_settings()
+                            .unwrap()
+                            .htlc_minimum_msat(),
+                    }),
+                }),
+            })
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl From<MonitoredChannelUpdate> for proto::MonitoredChannelUpdate {
+    fn from(
+        MonitoredChannelUpdate {
+            scrape:
+                ChannelScrape {
+                    scraped_at,
+                    state:
+                        ChannelState {
+                            short_channel_id,
+                            local_node_id,
+                            remote_node_id,
+                            active,
+                            private,
+                            capacity,
+                            local_balance,
+                            remote_balance,
+                            unsettled_balance,
+                            local_channel_settings:
+                                ChannelSettings {
+                                    chan_reserve_sat: local_chan_reserve_sat,
+                                    htlc_minimum_msat: local_htlm_minimum_msat,
+                                },
+                            remote_channel_settings:
+                                ChannelSettings {
+                                    chan_reserve_sat: remote_chan_reserve_sat,
+                                    htlc_minimum_msat: remote_htlm_minimum_msat,
+                                },
+                        },
+                },
+        }: MonitoredChannelUpdate,
+    ) -> Self {
+        proto::MonitoredChannelUpdate {
+            timestamp: scraped_at.into(),
+            channel_state: Some(proto::ChannelState {
+                short_channel_id,
+                local_node_id: local_node_id.to_string(),
+                remote_node_id: remote_node_id.to_string(),
+                active,
+                private,
+                capacity: capacity.into(),
+                local_balance: local_balance.into(),
+                remote_balance: remote_balance.into(),
+                unsettled_balance: unsettled_balance.into(),
+                local_channel_settings: Some(proto::ChannelSettings {
+                    chan_reserve_sat: local_chan_reserve_sat.into(),
+                    htlc_minimum_msat: local_htlm_minimum_msat.into(),
+                }),
+                remote_channel_settings: Some(proto::ChannelSettings {
+                    chan_reserve_sat: remote_chan_reserve_sat.into(),
+                    htlc_minimum_msat: remote_htlm_minimum_msat.into(),
+                }),
+            }),
+        }
+    }
+}
 impl From<flat::gossip::ChannelDirection> for proto::Direction {
     fn from(direction: flat::gossip::ChannelDirection) -> Self {
         match direction {
@@ -167,6 +267,24 @@ impl BusSubscriber<BusMessage> for proto::LnGossip {
 
     fn convert(msg: BusMessage) -> Option<Self> {
         if let BusMessage::LdkGossip(event) = msg {
+            Some(event.into())
+        } else {
+            None
+        }
+    }
+}
+
+impl BusSubscriber<BusMessage> for proto::MonitoredChannelUpdate {
+    fn filter(msg: &BusMessage) -> bool {
+        if let BusMessage::ChannelUpdate(_) = msg {
+            true
+        } else {
+            false
+        }
+    }
+
+    fn convert(msg: BusMessage) -> Option<Self> {
+        if let BusMessage::ChannelUpdate(event) = msg {
             Some(event.into())
         } else {
             None

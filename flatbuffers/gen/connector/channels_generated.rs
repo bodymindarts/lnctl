@@ -34,21 +34,21 @@ impl<'a> ChannelSettings<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args ChannelSettingsArgs) -> flatbuffers::WIPOffset<ChannelSettings<'bldr>> {
       let mut builder = ChannelSettingsBuilder::new(_fbb);
-      builder.add_min_htlc_msat(args.min_htlc_msat);
+      builder.add_htlc_minimum_msat(args.htlc_minimum_msat);
       builder.add_chan_reserve_sat(args.chan_reserve_sat);
       builder.finish()
     }
 
     pub const VT_CHAN_RESERVE_SAT: flatbuffers::VOffsetT = 4;
-    pub const VT_MIN_HTLC_MSAT: flatbuffers::VOffsetT = 6;
+    pub const VT_HTLC_MINIMUM_MSAT: flatbuffers::VOffsetT = 6;
 
   #[inline]
   pub fn chan_reserve_sat(&self) -> u64 {
     self._tab.get::<u64>(ChannelSettings::VT_CHAN_RESERVE_SAT, Some(0)).unwrap()
   }
   #[inline]
-  pub fn min_htlc_msat(&self) -> u64 {
-    self._tab.get::<u64>(ChannelSettings::VT_MIN_HTLC_MSAT, Some(0)).unwrap()
+  pub fn htlc_minimum_msat(&self) -> u64 {
+    self._tab.get::<u64>(ChannelSettings::VT_HTLC_MINIMUM_MSAT, Some(0)).unwrap()
   }
 }
 
@@ -60,21 +60,21 @@ impl flatbuffers::Verifiable for ChannelSettings<'_> {
     use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
      .visit_field::<u64>(&"chan_reserve_sat", Self::VT_CHAN_RESERVE_SAT, false)?
-     .visit_field::<u64>(&"min_htlc_msat", Self::VT_MIN_HTLC_MSAT, false)?
+     .visit_field::<u64>(&"htlc_minimum_msat", Self::VT_HTLC_MINIMUM_MSAT, false)?
      .finish();
     Ok(())
   }
 }
 pub struct ChannelSettingsArgs {
     pub chan_reserve_sat: u64,
-    pub min_htlc_msat: u64,
+    pub htlc_minimum_msat: u64,
 }
 impl<'a> Default for ChannelSettingsArgs {
     #[inline]
     fn default() -> Self {
         ChannelSettingsArgs {
             chan_reserve_sat: 0,
-            min_htlc_msat: 0,
+            htlc_minimum_msat: 0,
         }
     }
 }
@@ -88,8 +88,8 @@ impl<'a: 'b, 'b> ChannelSettingsBuilder<'a, 'b> {
     self.fbb_.push_slot::<u64>(ChannelSettings::VT_CHAN_RESERVE_SAT, chan_reserve_sat, 0);
   }
   #[inline]
-  pub fn add_min_htlc_msat(&mut self, min_htlc_msat: u64) {
-    self.fbb_.push_slot::<u64>(ChannelSettings::VT_MIN_HTLC_MSAT, min_htlc_msat, 0);
+  pub fn add_htlc_minimum_msat(&mut self, htlc_minimum_msat: u64) {
+    self.fbb_.push_slot::<u64>(ChannelSettings::VT_HTLC_MINIMUM_MSAT, htlc_minimum_msat, 0);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> ChannelSettingsBuilder<'a, 'b> {
@@ -110,7 +110,7 @@ impl std::fmt::Debug for ChannelSettings<'_> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let mut ds = f.debug_struct("ChannelSettings");
       ds.field("chan_reserve_sat", &self.chan_reserve_sat());
-      ds.field("min_htlc_msat", &self.min_htlc_msat());
+      ds.field("htlc_minimum_msat", &self.htlc_minimum_msat());
       ds.finish()
   }
 }

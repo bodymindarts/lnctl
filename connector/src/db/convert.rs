@@ -152,14 +152,14 @@ impl<'a> From<(&'a mut flatbuffers::FlatBufferBuilder<'_>, ChannelScrape)> for F
             builder,
             &flat::channels::ChannelSettingsArgs {
                 chan_reserve_sat: local_channel_reserve_sat.into(),
-                min_htlc_msat: local_htlc_minimum_msat.into(),
+                htlc_minimum_msat: local_htlc_minimum_msat.into(),
             },
         );
         let remote_channel_settings = flat::channels::ChannelSettings::create(
             builder,
             &flat::channels::ChannelSettingsArgs {
                 chan_reserve_sat: remote_channel_reserve_sat.into(),
-                min_htlc_msat: remote_htlc_minimum_msat.into(),
+                htlc_minimum_msat: remote_htlc_minimum_msat.into(),
             },
         );
         let local_node_id = flat::PubKey(local_node_id.serialize());

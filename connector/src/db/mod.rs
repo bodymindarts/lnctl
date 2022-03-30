@@ -25,6 +25,7 @@ use keys::*;
 pub(crate) struct Db {
     _inner: sled::Db,
     gossip: sled::Tree,
+    channels: sled::Tree,
 }
 
 impl Db {
@@ -44,7 +45,8 @@ impl Db {
                 }
             }
         });
-        let channel_db = db.open_tree("channels")?;
+        let channels = db.open_tree("gossip")?;
+        let channel_db = channels.clone();
         tokio::spawn(async move {
             let mut stream = bus.subscribe::<ChannelScrape>().await;
             let mut buffer = flatbuffers::FlatBufferBuilder::new();
@@ -75,7 +77,11 @@ impl Db {
                 }
             }
         });
-        Ok(Self { _inner: db, gossip })
+        Ok(Self {
+            _inner: db,
+            gossip,
+            channels,
+        })
     }
 
     pub fn load_gossip<T>(&self) -> impl Stream<Item = T>
@@ -88,6 +94,28 @@ impl Db {
             while let Some(Ok((_, value))) = iter.next() {
                 let bytes = value.as_ref();
                 if let Ok(record) = flat::gossip::root_as_gossip_record(bytes) {
+                    let mut to_send = T::try_from(record).ok();
+                    if let Some(msg) = to_send.take() {
+                        if let Err(e) = sender.send(msg).await {
+                            eprintln!("Couldn't send loaded gossip: {}", e);
+                        }
+                    }
+                }
+            }
+        });
+        ReceiverStream::new(receiver)
+    }
+
+    pub fn load_channels<T>(&self) -> impl Stream<Item = T>
+    where
+        for<'a> T: TryFrom<flat::channels::ChannelScrape<'a>> + Send + Sync + 'static,
+    {
+        let mut iter = self.channels.iter();
+        let (sender, receiver) = mpsc::channel(config::DEFAULT_CHANNEL_SIZE);
+        tokio::spawn(async move {
+            while let Some(Ok((_, value))) = iter.next() {
+                let bytes = value.as_ref();
+                if let Ok(record) = flat::channels::root_as_channel_scrape(bytes) {
                     let mut to_send = T::try_from(record).ok();
                     if let Some(msg) = to_send.take() {
                         if let Err(e) = sender.send(msg).await {

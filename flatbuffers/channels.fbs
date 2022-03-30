@@ -2,7 +2,7 @@ include "shared.fbs";
 
 table ChannelSettings {
   chan_reserve_sat:uint64;
-  min_htlc_msat:uint64;
+  htlc_minimum_msat:uint64;
 }
 
 table ChannelState {
