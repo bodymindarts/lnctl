@@ -18,7 +18,6 @@ use tokio::sync::mpsc;
 use tokio_stream::{wrappers::ReceiverStream, Stream, StreamExt};
 use zerocopy::*;
 
-use crate::server::proto;
 use crate::{bus::*, config};
 use convert::FinishedBytes;
 use keys::*;
@@ -71,14 +70,19 @@ impl Db {
         Ok(Self { _inner: db, gossip })
     }
 
-    pub fn load_gossip(&self) -> impl Stream<Item = proto::LnGossip> {
+    pub fn load_gossip<T>(&self) -> impl Stream<Item = T>
+    where
+        for<'a> T: TryFrom<flat::gossip::GossipRecord<'a>> + Send + Sync + 'static,
+    {
         let mut iter = self.gossip.iter();
         let (sender, receiver) = mpsc::channel(config::DEFAULT_CHANNEL_SIZE);
         tokio::spawn(async move {
+            let mut to_send = None;
             while let Some(Ok((_, value))) = iter.next() {
                 let bytes = value.as_ref();
                 if let Ok(record) = flat::gossip::root_as_gossip_record(bytes) {
-                    if let Some(msg) = Option::<proto::LnGossip>::from(record) {
+                    to_send = T::try_from(record).ok();
+                    if let Some(msg) = to_send.take() {
                         if let Err(e) = sender.send(msg).await {
                             eprintln!("Couldn't send loaded gossip: {}", e);
                         }

@@ -89,8 +89,10 @@ impl From<LdkGossip> for proto::LnGossip {
     }
 }
 
-impl<'a> From<flat::gossip::GossipRecord<'a>> for Option<proto::LnGossip> {
-    fn from(record: flat::gossip::GossipRecord) -> Self {
+impl<'a> TryFrom<flat::gossip::GossipRecord<'a>> for proto::LnGossip {
+    type Error = ();
+
+    fn try_from(record: flat::gossip::GossipRecord) -> Result<Self, Self::Error> {
         let msg = match record.msg_type() {
             flat::gossip::Message::NodeAnnouncement => {
                 let node_announcement = record.msg_as_node_announcement().unwrap();
@@ -126,10 +128,10 @@ impl<'a> From<flat::gossip::GossipRecord<'a>> for Option<proto::LnGossip> {
                     fee_proportional_millionths: channel_update.fee_proportional_millionths(),
                 })
             }
-            _ => return None,
+            _ => return Err(()),
         };
 
-        Some(proto::LnGossip {
+        Ok(proto::LnGossip {
             received_at: record.received_at(),
             message: Some(msg),
         })
