@@ -2,12 +2,179 @@
 
 
 
-use crate::shared_generated::*;
 use std::mem;
 use std::cmp::Ordering;
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
+
+// struct ConnectorId, aligned to 1
+#[repr(transparent)]
+#[derive(Clone, Copy, PartialEq)]
+pub struct ConnectorId(pub [u8; 16]);
+impl Default for ConnectorId { 
+  fn default() -> Self { 
+    Self([0; 16])
+  }
+}
+impl std::fmt::Debug for ConnectorId {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    f.debug_struct("ConnectorId")
+      .field("bytes", &self.bytes())
+      .finish()
+  }
+}
+
+impl flatbuffers::SimpleToVerifyInSlice for ConnectorId {}
+impl flatbuffers::SafeSliceAccess for ConnectorId {}
+impl<'a> flatbuffers::Follow<'a> for ConnectorId {
+  type Inner = &'a ConnectorId;
+  #[inline]
+  fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    <&'a ConnectorId>::follow(buf, loc)
+  }
+}
+impl<'a> flatbuffers::Follow<'a> for &'a ConnectorId {
+  type Inner = &'a ConnectorId;
+  #[inline]
+  fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    flatbuffers::follow_cast_ref::<ConnectorId>(buf, loc)
+  }
+}
+impl<'b> flatbuffers::Push for ConnectorId {
+    type Output = ConnectorId;
+    #[inline]
+    fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+        let src = unsafe {
+            ::std::slice::from_raw_parts(self as *const ConnectorId as *const u8, Self::size())
+        };
+        dst.copy_from_slice(src);
+    }
+}
+impl<'b> flatbuffers::Push for &'b ConnectorId {
+    type Output = ConnectorId;
+
+    #[inline]
+    fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+        let src = unsafe {
+            ::std::slice::from_raw_parts(*self as *const ConnectorId as *const u8, Self::size())
+        };
+        dst.copy_from_slice(src);
+    }
+}
+
+impl<'a> flatbuffers::Verifiable for ConnectorId {
+  #[inline]
+  fn run_verifier(
+    v: &mut flatbuffers::Verifier, pos: usize
+  ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+    use self::flatbuffers::Verifiable;
+    v.in_buffer::<Self>(pos)
+  }
+}
+impl<'a> ConnectorId {
+  #[allow(clippy::too_many_arguments)]
+  pub fn new(
+    bytes: &[u8; 16],
+  ) -> Self {
+    let mut s = Self([0; 16]);
+    s.set_bytes(&bytes);
+    s
+  }
+
+  pub fn bytes(&'a self) -> flatbuffers::Array<'a, u8, 16> {
+    flatbuffers::Array::follow(&self.0, 0)
+  }
+
+  pub fn set_bytes(&mut self, items: &[u8; 16]) {
+    flatbuffers::emplace_scalar_array(&mut self.0, 0, items);
+  }
+
+}
+
+// struct PubKey, aligned to 1
+#[repr(transparent)]
+#[derive(Clone, Copy, PartialEq)]
+pub struct PubKey(pub [u8; 33]);
+impl Default for PubKey { 
+  fn default() -> Self { 
+    Self([0; 33])
+  }
+}
+impl std::fmt::Debug for PubKey {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    f.debug_struct("PubKey")
+      .field("bytes", &self.bytes())
+      .finish()
+  }
+}
+
+impl flatbuffers::SimpleToVerifyInSlice for PubKey {}
+impl flatbuffers::SafeSliceAccess for PubKey {}
+impl<'a> flatbuffers::Follow<'a> for PubKey {
+  type Inner = &'a PubKey;
+  #[inline]
+  fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    <&'a PubKey>::follow(buf, loc)
+  }
+}
+impl<'a> flatbuffers::Follow<'a> for &'a PubKey {
+  type Inner = &'a PubKey;
+  #[inline]
+  fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    flatbuffers::follow_cast_ref::<PubKey>(buf, loc)
+  }
+}
+impl<'b> flatbuffers::Push for PubKey {
+    type Output = PubKey;
+    #[inline]
+    fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+        let src = unsafe {
+            ::std::slice::from_raw_parts(self as *const PubKey as *const u8, Self::size())
+        };
+        dst.copy_from_slice(src);
+    }
+}
+impl<'b> flatbuffers::Push for &'b PubKey {
+    type Output = PubKey;
+
+    #[inline]
+    fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+        let src = unsafe {
+            ::std::slice::from_raw_parts(*self as *const PubKey as *const u8, Self::size())
+        };
+        dst.copy_from_slice(src);
+    }
+}
+
+impl<'a> flatbuffers::Verifiable for PubKey {
+  #[inline]
+  fn run_verifier(
+    v: &mut flatbuffers::Verifier, pos: usize
+  ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+    use self::flatbuffers::Verifiable;
+    v.in_buffer::<Self>(pos)
+  }
+}
+impl<'a> PubKey {
+  #[allow(clippy::too_many_arguments)]
+  pub fn new(
+    bytes: &[u8; 33],
+  ) -> Self {
+    let mut s = Self([0; 33]);
+    s.set_bytes(&bytes);
+    s
+  }
+
+  pub fn bytes(&'a self) -> flatbuffers::Array<'a, u8, 33> {
+    flatbuffers::Array::follow(&self.0, 0)
+  }
+
+  pub fn set_bytes(&mut self, items: &[u8; 33]) {
+    flatbuffers::emplace_scalar_array(&mut self.0, 0, items);
+  }
+
+}
 
 pub enum ChannelSettingsOffset {}
 #[derive(Copy, Clone, PartialEq)]
@@ -48,7 +215,7 @@ impl<'a> ChannelSettings<'a> {
   }
   #[inline]
   pub fn htlc_minimum_msat(&self) -> u64 {
-    self._tab.get::<u64>(ChannelSettings::VT_HTLC_MINIMUM_MSAT, Some(0)).unwrap()
+    self._tab.get::<u64>(ChannelSettings::VT_HTLC_MINIMUM_MSAT, Some(1)).unwrap()
   }
 }
 
@@ -74,7 +241,7 @@ impl<'a> Default for ChannelSettingsArgs {
     fn default() -> Self {
         ChannelSettingsArgs {
             chan_reserve_sat: 0,
-            htlc_minimum_msat: 0,
+            htlc_minimum_msat: 1,
         }
     }
 }
@@ -89,7 +256,7 @@ impl<'a: 'b, 'b> ChannelSettingsBuilder<'a, 'b> {
   }
   #[inline]
   pub fn add_htlc_minimum_msat(&mut self, htlc_minimum_msat: u64) {
-    self.fbb_.push_slot::<u64>(ChannelSettings::VT_HTLC_MINIMUM_MSAT, htlc_minimum_msat, 0);
+    self.fbb_.push_slot::<u64>(ChannelSettings::VT_HTLC_MINIMUM_MSAT, htlc_minimum_msat, 1);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> ChannelSettingsBuilder<'a, 'b> {
@@ -344,192 +511,4 @@ impl std::fmt::Debug for ChannelState<'_> {
       ds.field("remote_channel_settings", &self.remote_channel_settings());
       ds.finish()
   }
-}
-pub enum ChannelScrapeOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct ChannelScrape<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for ChannelScrape<'a> {
-    type Inner = ChannelScrape<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self { _tab: flatbuffers::Table { buf, loc } }
-    }
-}
-
-impl<'a> ChannelScrape<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        ChannelScrape { _tab: table }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args ChannelScrapeArgs<'args>) -> flatbuffers::WIPOffset<ChannelScrape<'bldr>> {
-      let mut builder = ChannelScrapeBuilder::new(_fbb);
-      builder.add_scrape_timestamp(args.scrape_timestamp);
-      if let Some(x) = args.state { builder.add_state(x); }
-      builder.finish()
-    }
-
-    pub const VT_SCRAPE_TIMESTAMP: flatbuffers::VOffsetT = 4;
-    pub const VT_STATE: flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub fn scrape_timestamp(&self) -> u64 {
-    self._tab.get::<u64>(ChannelScrape::VT_SCRAPE_TIMESTAMP, Some(0)).unwrap()
-  }
-  #[inline]
-  pub fn state(&self) -> Option<ChannelState<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<ChannelState>>(ChannelScrape::VT_STATE, None)
-  }
-}
-
-impl flatbuffers::Verifiable for ChannelScrape<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut flatbuffers::Verifier, pos: usize
-  ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-    use self::flatbuffers::Verifiable;
-    v.visit_table(pos)?
-     .visit_field::<u64>(&"scrape_timestamp", Self::VT_SCRAPE_TIMESTAMP, false)?
-     .visit_field::<flatbuffers::ForwardsUOffset<ChannelState>>(&"state", Self::VT_STATE, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct ChannelScrapeArgs<'a> {
-    pub scrape_timestamp: u64,
-    pub state: Option<flatbuffers::WIPOffset<ChannelState<'a>>>,
-}
-impl<'a> Default for ChannelScrapeArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        ChannelScrapeArgs {
-            scrape_timestamp: 0,
-            state: None,
-        }
-    }
-}
-pub struct ChannelScrapeBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> ChannelScrapeBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_scrape_timestamp(&mut self, scrape_timestamp: u64) {
-    self.fbb_.push_slot::<u64>(ChannelScrape::VT_SCRAPE_TIMESTAMP, scrape_timestamp, 0);
-  }
-  #[inline]
-  pub fn add_state(&mut self, state: flatbuffers::WIPOffset<ChannelState<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<ChannelState>>(ChannelScrape::VT_STATE, state);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> ChannelScrapeBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    ChannelScrapeBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<ChannelScrape<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl std::fmt::Debug for ChannelScrape<'_> {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    let mut ds = f.debug_struct("ChannelScrape");
-      ds.field("scrape_timestamp", &self.scrape_timestamp());
-      ds.field("state", &self.state());
-      ds.finish()
-  }
-}
-#[inline]
-#[deprecated(since="2.0.0", note="Deprecated in favor of `root_as...` methods.")]
-pub fn get_root_as_channel_scrape<'a>(buf: &'a [u8]) -> ChannelScrape<'a> {
-  unsafe { flatbuffers::root_unchecked::<ChannelScrape<'a>>(buf) }
-}
-
-#[inline]
-#[deprecated(since="2.0.0", note="Deprecated in favor of `root_as...` methods.")]
-pub fn get_size_prefixed_root_as_channel_scrape<'a>(buf: &'a [u8]) -> ChannelScrape<'a> {
-  unsafe { flatbuffers::size_prefixed_root_unchecked::<ChannelScrape<'a>>(buf) }
-}
-
-#[inline]
-/// Verifies that a buffer of bytes contains a `ChannelScrape`
-/// and returns it.
-/// Note that verification is still experimental and may not
-/// catch every error, or be maximally performant. For the
-/// previous, unchecked, behavior use
-/// `root_as_channel_scrape_unchecked`.
-pub fn root_as_channel_scrape(buf: &[u8]) -> Result<ChannelScrape, flatbuffers::InvalidFlatbuffer> {
-  flatbuffers::root::<ChannelScrape>(buf)
-}
-#[inline]
-/// Verifies that a buffer of bytes contains a size prefixed
-/// `ChannelScrape` and returns it.
-/// Note that verification is still experimental and may not
-/// catch every error, or be maximally performant. For the
-/// previous, unchecked, behavior use
-/// `size_prefixed_root_as_channel_scrape_unchecked`.
-pub fn size_prefixed_root_as_channel_scrape(buf: &[u8]) -> Result<ChannelScrape, flatbuffers::InvalidFlatbuffer> {
-  flatbuffers::size_prefixed_root::<ChannelScrape>(buf)
-}
-#[inline]
-/// Verifies, with the given options, that a buffer of bytes
-/// contains a `ChannelScrape` and returns it.
-/// Note that verification is still experimental and may not
-/// catch every error, or be maximally performant. For the
-/// previous, unchecked, behavior use
-/// `root_as_channel_scrape_unchecked`.
-pub fn root_as_channel_scrape_with_opts<'b, 'o>(
-  opts: &'o flatbuffers::VerifierOptions,
-  buf: &'b [u8],
-) -> Result<ChannelScrape<'b>, flatbuffers::InvalidFlatbuffer> {
-  flatbuffers::root_with_opts::<ChannelScrape<'b>>(opts, buf)
-}
-#[inline]
-/// Verifies, with the given verifier options, that a buffer of
-/// bytes contains a size prefixed `ChannelScrape` and returns
-/// it. Note that verification is still experimental and may not
-/// catch every error, or be maximally performant. For the
-/// previous, unchecked, behavior use
-/// `root_as_channel_scrape_unchecked`.
-pub fn size_prefixed_root_as_channel_scrape_with_opts<'b, 'o>(
-  opts: &'o flatbuffers::VerifierOptions,
-  buf: &'b [u8],
-) -> Result<ChannelScrape<'b>, flatbuffers::InvalidFlatbuffer> {
-  flatbuffers::size_prefixed_root_with_opts::<ChannelScrape<'b>>(opts, buf)
-}
-#[inline]
-/// Assumes, without verification, that a buffer of bytes contains a ChannelScrape and returns it.
-/// # Safety
-/// Callers must trust the given bytes do indeed contain a valid `ChannelScrape`.
-pub unsafe fn root_as_channel_scrape_unchecked(buf: &[u8]) -> ChannelScrape {
-  flatbuffers::root_unchecked::<ChannelScrape>(buf)
-}
-#[inline]
-/// Assumes, without verification, that a buffer of bytes contains a size prefixed ChannelScrape and returns it.
-/// # Safety
-/// Callers must trust the given bytes do indeed contain a valid size prefixed `ChannelScrape`.
-pub unsafe fn size_prefixed_root_as_channel_scrape_unchecked(buf: &[u8]) -> ChannelScrape {
-  flatbuffers::size_prefixed_root_unchecked::<ChannelScrape>(buf)
-}
-#[inline]
-pub fn finish_channel_scrape_buffer<'a, 'b>(
-    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-    root: flatbuffers::WIPOffset<ChannelScrape<'a>>) {
-  fbb.finish(root, None);
-}
-
-#[inline]
-pub fn finish_size_prefixed_channel_scrape_buffer<'a, 'b>(fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>, root: flatbuffers::WIPOffset<ChannelScrape<'a>>) {
-  fbb.finish_size_prefixed(root, None);
 }

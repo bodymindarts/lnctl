@@ -1,0 +1,11 @@
+include "shared.fbs";
+
+table MonitoredChannelState {
+  monitored_node_id:PubKey;
+  connector_id:ConnectorId;
+  scrape_timestamp:uint64;
+  archived_timestamp:uint64;
+  state:ChannelState;
+}
+
+root_type MonitoredChannelState;

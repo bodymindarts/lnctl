@@ -1,3 +1,25 @@
+struct ConnectorId {
+  bytes:[ubyte:16];
+}
 struct PubKey {
   bytes:[ubyte:33];
+}
+
+table ChannelSettings {
+  chan_reserve_sat:uint64;
+  htlc_minimum_msat:uint64 = 1;
+}
+
+table ChannelState {
+  short_channel_id:uint64;
+  local_node_id:PubKey;
+  remote_node_id:PubKey;
+  active:bool = true;
+  private:bool = false;
+  capacity:uint64;
+  local_balance:uint64;
+  remote_balance:uint64;
+  unsettled_balance:uint64;
+  local_channel_settings:ChannelSettings;
+  remote_channel_settings:ChannelSettings;
 }

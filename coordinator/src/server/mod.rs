@@ -5,7 +5,7 @@ pub mod proto {
 use tonic::{transport::Server, Request, Response, Status};
 use uuid::Uuid;
 
-use crate::{config::ServerConfig, connector::Connectors};
+use crate::{config::ServerConfig, connector::Connectors, db::Db};
 use proto::{
     lnctl_coordinator_server::{LnctlCoordinator, LnctlCoordinatorServer},
     *,
@@ -14,11 +14,12 @@ use proto::{
 struct CoordinatorServer {
     id: Uuid,
     connectors: Connectors,
+    db: Db,
 }
 
 impl CoordinatorServer {
-    pub fn new(id: Uuid, connectors: Connectors) -> Self {
-        Self { id, connectors }
+    pub fn new(id: Uuid, connectors: Connectors, db: Db) -> Self {
+        Self { id, connectors, db }
     }
 }
 
@@ -48,11 +49,12 @@ pub(crate) async fn run_server(
     config: ServerConfig,
     id: Uuid,
     connectors: Connectors,
+    db: Db,
 ) -> anyhow::Result<()> {
     println!("Listening on port {}", config.port);
     Server::builder()
         .add_service(LnctlCoordinatorServer::new(CoordinatorServer::new(
-            id, connectors,
+            id, connectors, db,
         )))
         .serve(([0, 0, 0, 0], config.port).into())
         .await?;

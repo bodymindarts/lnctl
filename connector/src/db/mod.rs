@@ -6,7 +6,7 @@ pub mod flat {
     }
     pub mod channels {
         use super::*;
-        include!("../../../flatbuffers/gen/connector/channels_generated.rs");
+        include!("../../../flatbuffers/gen/connector/channels_scrape_generated.rs");
     }
 }
 
@@ -32,10 +32,19 @@ impl Db {
     pub fn new(data_dir: &PathBuf, bus: ConnectorBus) -> anyhow::Result<Self> {
         let db: sled::Db = sled::open(format!("{}/sled", data_dir.display()))?;
         let gossip = db.open_tree("gossip")?;
-        let gossip_db = gossip.clone();
-        let gossip_bus = bus.clone();
+        Self::persist_gossip(gossip.clone(), bus.clone());
+        let channels = db.open_tree("channels")?;
+        Self::persist_channels(channels.clone(), bus);
+        Ok(Self {
+            _inner: db,
+            gossip,
+            channels,
+        })
+    }
+
+    fn persist_gossip(gossip_db: sled::Tree, bus: ConnectorBus) {
         tokio::spawn(async move {
-            let mut stream = gossip_bus.subscribe::<LdkGossip>().await;
+            let mut stream = bus.subscribe::<LdkGossip>().await;
             let mut buffer = flatbuffers::FlatBufferBuilder::new();
             while let Some(msg) = stream.next().await {
                 let key = GossipMessageKey::from(&msg);
@@ -45,8 +54,9 @@ impl Db {
                 }
             }
         });
-        let channels = db.open_tree("gossip")?;
-        let channel_db = channels.clone();
+    }
+
+    fn persist_channels(channels_db: sled::Tree, bus: ConnectorBus) {
         tokio::spawn(async move {
             let mut stream = bus.subscribe::<ChannelScrape>().await;
             let mut buffer = flatbuffers::FlatBufferBuilder::new();
@@ -54,7 +64,7 @@ impl Db {
                 let mut updated = false;
                 let key = ChannelStateKey::from(&scrape);
                 let finished_bytes = FinishedBytes::from((&mut buffer, scrape.clone()));
-                if let Err(e) = channel_db.update_and_fetch(key.as_bytes(), |existing| {
+                if let Err(e) = channels_db.update_and_fetch(key.as_bytes(), |existing| {
                     if let Some(existing) = existing {
                         if let Ok(record) = flat::channels::root_as_channel_scrape(&existing) {
                             let new_state =
@@ -77,11 +87,6 @@ impl Db {
                 }
             }
         });
-        Ok(Self {
-            _inner: db,
-            gossip,
-            channels,
-        })
     }
 
     pub fn load_gossip<T>(&self) -> impl Stream<Item = T>

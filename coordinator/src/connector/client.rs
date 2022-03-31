@@ -47,9 +47,10 @@ impl ConnectorClient {
                 let mut stream = response.into_inner();
                 while let Ok(Some(node_event)) = stream.message().await {
                     if let Err(_) = bus
-                        .dispatch(BusMessage::ConnectorMessage {
+                        .dispatch(ConnectorMessage {
                             connector_id: connector_id.clone(),
                             monitored_node_id: monitored_node_id.clone(),
+                            received_at: UnixTimestampSecs::now(),
                             node_event,
                         })
                         .await

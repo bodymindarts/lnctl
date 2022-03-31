@@ -104,9 +104,7 @@ impl LnctlConnector for ConnectorServer {
         let gossip_stream = self.db.load_gossip();
         let channels_stream = self.db.load_channels();
         let output_stream = channels_stream
-            .map(|scrape| proto::NodeEvent {
-                event: Some(proto::node_event::Event::ChannelUpdate(scrape)),
-            })
+            .map(|scrape| proto::NodeEvent { event })
             .chain(
                 gossip_stream
                     .map(|gossip| proto::NodeEvent {
