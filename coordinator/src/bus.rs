@@ -1,4 +1,4 @@
-use crate::connector::proto;
+use ::shared::proto;
 use shared::{bus::MessageBus, primitives::*};
 
 #[derive(Clone, Debug)]

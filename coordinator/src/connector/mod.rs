@@ -1,7 +1,7 @@
 mod client;
 mod file;
 
-pub use client::proto;
+pub use ::shared::proto;
 
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 use tokio::sync::{mpsc, RwLock, RwLockReadGuard};

@@ -1,8 +1,6 @@
-use std::marker::PhantomData;
-
 use super::flat;
-use crate::{bus::*, connector::proto};
-use shared::primitives::NodeId;
+use crate::bus::*;
+use shared::{primitives::NodeId, proto};
 
 #[repr(transparent)]
 pub struct FinishedBytes<'a>(&'a [u8]);

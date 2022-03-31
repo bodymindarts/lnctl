@@ -2,8 +2,12 @@ syntax = "proto3";
 
 package coordinator;
 
+import "shared.proto";
+
 service LnctlCoordinator {
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse) {}
+  rpc ListMonitoredChannelSnapshots(ListMonitoredChannelSnapshotsRequest)
+      returns (ListMonitoredChannelSnapshotsResponse) {}
 }
 
 message GetStatusRequest {}
@@ -16,4 +20,17 @@ message ConnectorInfo {
   string id = 1;
   string monitored_node_id = 2;
   string type = 3;
+}
+
+message ListMonitoredChannelSnapshotsRequest {
+  uint64 short_channel_id = 1;
+}
+
+message ListMonitoredChannelSnapshotsResponse {
+  repeated MonitoredChannelSnapshot snapshots = 1;
+}
+
+message MonitoredChannelSnapshot {
+  uint64 timestamp = 1;
+  .shared.ChannelState channel_state = 2;
 }

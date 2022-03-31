@@ -1,14 +1,10 @@
 mod convert;
-pub mod proto {
-    tonic::include_proto!("connector");
-}
 
 use futures::Stream;
 use std::{collections::HashMap, pin::Pin, sync::Arc};
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 use tonic::{transport::Server, Request, Response, Status};
-use uuid::Uuid;
 
 use crate::{
     bus::*,
@@ -16,11 +12,14 @@ use crate::{
     db::Db,
     node_client::NodeClient,
 };
-use proto::{
-    lnctl_connector_server::{LnctlConnector, LnctlConnectorServer},
-    *,
+use ::shared::{
+    primitives::*,
+    proto::{
+        self,
+        lnctl_connector_server::{LnctlConnector, LnctlConnectorServer},
+        *,
+    },
 };
-use shared::primitives::*;
 
 type ConnectorResponse<T> = Result<Response<T>, Status>;
 type ResponseStream = Pin<Box<dyn Stream<Item = Result<NodeEvent, Status>> + Send>>;
@@ -85,11 +84,11 @@ impl ConnectorServer {
 impl LnctlConnector for ConnectorServer {
     async fn get_status(
         &self,
-        _request: Request<GetStatusRequest>,
-    ) -> Result<Response<GetStatusResponse>, Status> {
+        _request: Request<connector::GetStatusRequest>,
+    ) -> Result<Response<connector::GetStatusResponse>, Status> {
         let client = self.node_client.write().await;
 
-        Ok(Response::new(GetStatusResponse {
+        Ok(Response::new(connector::GetStatusResponse {
             connector_id: self.connector_id.to_string(),
             monitored_node_id: self.monitored_node_id.to_string(),
             r#type: proto::ConnectorType::from(client.node_type()) as i32,
@@ -104,7 +103,9 @@ impl LnctlConnector for ConnectorServer {
         let gossip_stream = self.db.load_gossip();
         let channels_stream = self.db.load_channels();
         let output_stream = channels_stream
-            .map(|scrape| proto::NodeEvent { event })
+            .map(|update| proto::connector::NodeEvent {
+                event: Some(proto::node_event::Event::ChannelUpdate(update)),
+            })
             .chain(
                 gossip_stream
                     .map(|gossip| proto::NodeEvent {

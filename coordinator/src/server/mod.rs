@@ -1,14 +1,11 @@
-pub mod proto {
-    tonic::include_proto!("coordinator");
-}
-
 use tonic::{transport::Server, Request, Response, Status};
 use uuid::Uuid;
 
 use crate::{config::ServerConfig, connector::Connectors, db::Db};
-use proto::{
+use ::shared::proto::{
+    self,
+    coordinator::*,
     lnctl_coordinator_server::{LnctlCoordinator, LnctlCoordinatorServer},
-    *,
 };
 
 struct CoordinatorServer {
@@ -42,6 +39,13 @@ impl LnctlCoordinator for CoordinatorServer {
                 .collect(),
         };
         Ok(Response::new(ret))
+    }
+
+    async fn list_monitored_channel_snapshots(
+        &self,
+        request: Request<ListMonitoredChannelSnapshotsRequest>,
+    ) -> Result<Response<ListMonitoredChannelSnapshotsResponse>, Status> {
+        unimplemented!()
     }
 }
 

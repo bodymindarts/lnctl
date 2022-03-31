@@ -20,12 +20,10 @@ serde_json = { version = "1.0" }
 sled = "0.34"
 tonic = { version = "0.6", features = ["tls", "transport"] }
 uuid = { version = "0.8", features = ["v4"] }
-prost = "0.9"
 tokio = { version = "1.5", features = [ "io-util", "macros", "rt", "rt-multi-thread", "sync", "net", "time" ] }
 tokio-stream = "0.1"
 notify = "4.0"
 zerocopy = "0.6.1"
 
 [build-dependencies]
-tonic-build = { version = "0.6" , features = ["prost"] }
 flatc-rust = "0.2"

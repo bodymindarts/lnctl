@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package connector;
 
+import "shared.proto";
+
 service LnctlConnector {
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse) {}
   rpc StreamNodeEvents(StreamNodeEventsRequest) returns (stream NodeEvent) {}
@@ -59,22 +61,5 @@ enum Direction {
 
 message MonitoredChannelUpdate {
   uint64 timestamp = 1;
-  ChannelState channel_state = 2;
-}
-message ChannelState {
-  uint64 short_channel_id = 1;
-  string local_node_id = 2;
-  string remote_node_id = 3;
-  bool active = 4;
-  bool private = 5;
-  uint64 capacity = 6;
-  uint64 local_balance = 7;
-  uint64 remote_balance = 8;
-  uint64 unsettled_balance = 9;
-  ChannelSettings local_channel_settings = 10;
-  ChannelSettings remote_channel_settings = 11;
-}
-message ChannelSettings {
-  uint64 chan_reserve_sat = 1;
-  uint64 htlc_minimum_msat = 2;
+  .shared.ChannelState channel_state = 2;
 }

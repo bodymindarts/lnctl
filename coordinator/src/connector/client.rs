@@ -1,13 +1,11 @@
-pub mod proto {
-    tonic::include_proto!("connector");
-}
-
 use anyhow::Context;
 use tonic::transport::channel::Channel;
 
-use self::proto::*;
 use crate::bus::*;
-use shared::primitives::*;
+use ::shared::{
+    primitives::*,
+    proto::{self, connector::*},
+};
 pub type LnCtlConnectorClient = lnctl_connector_client::LnctlConnectorClient<Channel>;
 
 pub(crate) struct ConnectorClient {
@@ -60,15 +58,5 @@ impl ConnectorClient {
                 }
             }
         });
-    }
-}
-
-mod convert {
-    impl From<super::proto::ConnectorType> for String {
-        fn from(t: super::proto::ConnectorType) -> Self {
-            match t {
-                super::proto::ConnectorType::Lnd => "lnd".to_string(),
-            }
-        }
     }
 }

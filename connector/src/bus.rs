@@ -1,6 +1,6 @@
 use lightning::ln::msgs::*;
 
-use crate::server::proto;
+use ::shared::proto;
 use shared::{bus::MessageBus, primitives::*};
 
 #[derive(Clone, Debug)]

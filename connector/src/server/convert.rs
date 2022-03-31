@@ -1,5 +1,5 @@
-use super::proto;
 use crate::{bus::*, db::flat, node_client::NodeType};
+use ::shared::proto;
 use shared::{bus::BusSubscriber, utils::hex_str};
 
 impl From<LdkGossip> for proto::LnGossip {

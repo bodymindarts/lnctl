@@ -10,11 +10,11 @@ mod convert;
 mod keys;
 
 use std::path::PathBuf;
-use tokio::sync::mpsc;
 use tokio_stream::{wrappers::ReceiverStream, Stream, StreamExt};
 use zerocopy::*;
 
-use crate::{bus::*, config, connector::proto};
+use crate::{bus::*, config};
+use ::shared::proto;
 use convert::FinishedBytes;
 use keys::*;
 

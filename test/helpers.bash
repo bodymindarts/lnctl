@@ -18,11 +18,11 @@ stop_coordinator() {
 }
 
 curl_connector() {
-  grpcurl -plaintext -import-path ./proto/connector -proto connector.proto localhost:5626 connector.LnctlConnector/$1 
+  grpcurl -plaintext -import-path ./proto/shared -import-path ./proto/connector -proto connector.proto localhost:5626 connector.LnctlConnector/$1 
 }
 
 curl_coordinator() {
-  grpcurl -plaintext -import-path ./proto/coordinator -proto coordinator.proto localhost:5625 coordinator.LnctlCoordinator/$1 
+  grpcurl -plaintext -import-path ./proto/shared -import-path ./proto/coordinator -proto coordinator.proto localhost:5625 coordinator.LnctlCoordinator/$1 
 }
 
 start_network() {
