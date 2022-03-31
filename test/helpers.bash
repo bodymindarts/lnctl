@@ -22,7 +22,12 @@ curl_connector() {
 }
 
 curl_coordinator() {
-  grpcurl -plaintext -import-path ./proto/shared -import-path ./proto/coordinator -proto coordinator.proto localhost:5625 coordinator.LnctlCoordinator/$1 
+  args=""
+  if [[ "${2}" != "" ]]; then
+    args="-d"
+  fi
+
+  grpcurl ${args} ${2} -plaintext -import-path ./proto/shared -import-path ./proto/coordinator -proto coordinator.proto  localhost:5625 coordinator.LnctlCoordinator/$1 
 }
 
 start_network() {

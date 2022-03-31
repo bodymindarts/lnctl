@@ -16,7 +16,6 @@ pub use shared::*;
 
 mod convert {
     use super::*;
-    use crate::utils;
 
     impl From<ConnectorType> for String {
         fn from(t: ConnectorType) -> Self {
