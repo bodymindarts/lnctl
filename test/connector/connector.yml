@@ -7,3 +7,5 @@ connector:
 
 gossip:
   host: host.docker.internal
+
+scrape_interval: 2

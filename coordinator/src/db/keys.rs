@@ -10,6 +10,20 @@ pub struct ChannelArchiveKey {
     scrape_time: U64<BigEndian>,
 }
 
+impl ChannelArchiveKey {
+    pub fn range(short_channel_id: u64) -> (Self, Self) {
+        let start = ChannelArchiveKey {
+            short_channel_id: U64::new(short_channel_id),
+            scrape_time: U64::new(0),
+        };
+        let end = ChannelArchiveKey {
+            short_channel_id: U64::new(short_channel_id),
+            scrape_time: U64::new(u64::MAX),
+        };
+        (start, end)
+    }
+}
+
 impl TryFrom<&ConnectorMsgSub<proto::MonitoredChannelUpdate>> for ChannelArchiveKey {
     type Error = ();
 

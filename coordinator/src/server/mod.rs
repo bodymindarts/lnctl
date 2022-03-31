@@ -1,3 +1,5 @@
+mod convert;
+
 use tonic::{transport::Server, Request, Response, Status};
 use uuid::Uuid;
 
@@ -45,7 +47,13 @@ impl LnctlCoordinator for CoordinatorServer {
         &self,
         request: Request<ListMonitoredChannelSnapshotsRequest>,
     ) -> Result<Response<ListMonitoredChannelSnapshotsResponse>, Status> {
-        unimplemented!()
+        let request = request.into_inner();
+        let snapshots = self
+            .db
+            .list_monitored_channel_snapshots(request.short_channel_id)?;
+        Ok(Response::new(ListMonitoredChannelSnapshotsResponse {
+            snapshots,
+        }))
     }
 }
 

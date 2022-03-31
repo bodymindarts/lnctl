@@ -97,3 +97,9 @@ impl<'a>
         Err(())
     }
 }
+
+impl From<&flat::PubKey> for String {
+    fn from(pubkey: &flat::PubKey) -> Self {
+        ::shared::utils::hex_str(&pubkey.0)
+    }
+}
