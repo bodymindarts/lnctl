@@ -12,6 +12,13 @@ source:
   repository: #@ pipeline_image()
 #@ end
 
+groups:
+- name: lnctl
+  jobs:
+  - test-unit
+- name: image
+  jobs: [ build-pipeline-image ]
+
 jobs:
 - name: build-pipeline-image
   serial: true

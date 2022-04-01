@@ -1,4 +1,6 @@
 FROM rust:latest
+# see https://github.com/neomantra/docker-flatbuffers#usage-as-an-image-build-stage
+COPY --from=neomantra/flatbuffers /usr/local/bin/flatc /usr/local/bin/flatc
 
 RUN rustc --version
 
