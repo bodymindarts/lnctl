@@ -1,7 +1,7 @@
 use super::results;
 use ::shared::proto::*;
 use tonic::transport::channel::Channel;
-pub type LnCtlCoordinatorClient = lnctl_coordinator_client::LnctlCoordinatorClient<Channel>;
+pub type LnCtlGatewayClient = lnctl_gateway_client::LnctlGatewayClient<Channel>;
 
 pub struct ClientConfig {
     pub addr: String,
@@ -10,9 +10,9 @@ pub struct ClientConfig {
 
 pub async fn get_status(config: ClientConfig) -> anyhow::Result<()> {
     let mut client =
-        LnCtlCoordinatorClient::connect(format!("http://{}:{}", config.addr, config.port)).await?;
+        LnCtlGatewayClient::connect(format!("http://{}:{}", config.addr, config.port)).await?;
 
-    let request = tonic::Request::new(coordinator::GetStatusRequest {});
+    let request = tonic::Request::new(gateway::GetStatusRequest {});
 
     let response = client.get_status(request).await?;
 
@@ -30,10 +30,10 @@ pub async fn get_status(config: ClientConfig) -> anyhow::Result<()> {
 
 pub async fn channel_history(config: ClientConfig, short_channel_id: u64) -> anyhow::Result<()> {
     let mut client =
-        LnCtlCoordinatorClient::connect(format!("http://{}:{}", config.addr, config.port)).await?;
+        LnCtlGatewayClient::connect(format!("http://{}:{}", config.addr, config.port)).await?;
 
     let request =
-        tonic::Request::new(coordinator::ListMonitoredChannelSnapshotsRequest { short_channel_id });
+        tonic::Request::new(gateway::ListMonitoredChannelSnapshotsRequest { short_channel_id });
 
     let response = client.list_monitored_channel_snapshots(request).await?;
 

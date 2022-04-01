@@ -16,7 +16,7 @@ pub(crate) struct ConnectorClient {
 }
 
 impl ConnectorClient {
-    pub async fn connect(address: &str, bus: CoordinatorBus) -> anyhow::Result<Self> {
+    pub async fn connect(address: &str, bus: GatewayBus) -> anyhow::Result<Self> {
         let mut client = LnCtlConnectorClient::connect(format!("http://{}", address))
             .await
             .context("couldn't establish connection")?;
@@ -35,7 +35,7 @@ impl ConnectorClient {
     }
 
     fn spawn_messages_stream(
-        bus: CoordinatorBus,
+        bus: GatewayBus,
         mut client: LnCtlConnectorClient,
         connector_id: ConnectorId,
         monitored_node_id: MonitoredNodeId,

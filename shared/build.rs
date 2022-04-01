@@ -2,12 +2,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     tonic_build::configure().compile(
         &[
             "../proto/shared/shared.proto",
-            "../proto/coordinator/coordinator.proto",
+            "../proto/gateway/gateway.proto",
             "../proto/connector/connector.proto",
         ],
         &[
             "../proto/shared",
-            "../proto/coordinator",
+            "../proto/gateway",
             "../proto/connector",
         ],
     )?;

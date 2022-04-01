@@ -6,31 +6,31 @@ use uuid::Uuid;
 use crate::{config::ServerConfig, connector::Connectors, db::Db};
 use ::shared::proto::{
     self,
-    coordinator::*,
-    lnctl_coordinator_server::{LnctlCoordinator, LnctlCoordinatorServer},
+    gateway::*,
+    lnctl_gateway_server::{LnctlGateway, LnctlGatewayServer},
 };
 
-struct CoordinatorServer {
+struct GatewayServer {
     id: Uuid,
     connectors: Connectors,
     db: Db,
 }
 
-impl CoordinatorServer {
+impl GatewayServer {
     pub fn new(id: Uuid, connectors: Connectors, db: Db) -> Self {
         Self { id, connectors, db }
     }
 }
 
 #[tonic::async_trait]
-impl LnctlCoordinator for CoordinatorServer {
+impl LnctlGateway for GatewayServer {
     async fn get_status(
         &self,
         _request: Request<GetStatusRequest>,
     ) -> Result<Response<GetStatusResponse>, Status> {
         let connectors = self.connectors.read().await;
         let ret = GetStatusResponse {
-            coordinator_id: self.id.to_string(),
+            gateway_id: self.id.to_string(),
             connectors: connectors
                 .iter()
                 .map(|(id, con)| ConnectorInfo {
@@ -65,7 +65,7 @@ pub(crate) async fn run_server(
 ) -> anyhow::Result<()> {
     println!("Listening on port {}", config.port);
     Server::builder()
-        .add_service(LnctlCoordinatorServer::new(CoordinatorServer::new(
+        .add_service(LnctlGatewayServer::new(GatewayServer::new(
             id, connectors, db,
         )))
         .serve(([0, 0, 0, 0], config.port).into())

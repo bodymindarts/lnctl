@@ -11,5 +11,5 @@ connector:
 
   scrape_interval: 2
 
-coordinator:
-  connectors_file: test/coordinator/connectors
+gateway:
+  connectors_file: test/gateway/connectors

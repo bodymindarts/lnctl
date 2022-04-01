@@ -4,7 +4,7 @@ load "../helpers"
 
 setup_file() {
   stop_connector
-  stop_coordinator
+  stop_gateway
   start_network
   start_connector
   retry 5 1 curl_connector GetStatus
@@ -16,16 +16,16 @@ teardown_file() {
 }
 
 setup() {
-  start_coordinator
-  retry 5 1 curl_coordinator GetStatus 
+  start_gateway
+  retry 5 1 curl_gateway GetStatus
 }
 
 teardown() {
-  stop_coordinator
+  stop_gateway
 }
 
-@test "Coordinator connects to connector" {
-  n_connectors=$(curl_coordinator GetStatus | jq -r '.connectors | length')
+@test "Gateway connects to connector" {
+  n_connectors=$(curl_gateway GetStatus | jq -r '.connectors | length')
   [ "${n_connectors}" -eq 1 ]
 }
 
@@ -33,6 +33,8 @@ teardown() {
   open_channel lnd1 lnd2
   chan_id=$(lnd_cmd lnd1 listchannels | jq -r '.channels[0].chan_id')
 
-  n_snapshots=$(curl_coordinator ListMonitoredChannelSnapshots "$(jq -n -c --arg chan_id ${chan_id} '{ short_channel_id: $chan_id }')" | jq -r '.snapshots | length')
+  sleep 2
+
+  n_snapshots=$(curl_gateway ListMonitoredChannelSnapshots "$(jq -n -c --arg chan_id ${chan_id} '{ short_channel_id: $chan_id }')" | jq -r '.snapshots | length')
   [ "${n_snapshots}" -eq 1 ]
 }

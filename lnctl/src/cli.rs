@@ -34,12 +34,12 @@ pub async fn run() -> anyhow::Result<()> {
             connector::run(config.connector).await?;
         }
         Commands::Server {} => {
-            coordinator::run(config.coordinator).await?;
+            gateway::run(config.gateway).await?;
         }
         Commands::GetStatus {} => {
             let config = client::ClientConfig {
                 addr: "localhost".to_string(),
-                port: config.coordinator.server.port,
+                port: config.gateway.server.port,
             };
 
             client::get_status(config).await?;
@@ -47,7 +47,7 @@ pub async fn run() -> anyhow::Result<()> {
         Commands::ChannelHistory { channel_id } => {
             let config = client::ClientConfig {
                 addr: "localhost".to_string(),
-                port: config.coordinator.server.port,
+                port: config.gateway.server.port,
             };
 
             client::channel_history(config, channel_id).await?;

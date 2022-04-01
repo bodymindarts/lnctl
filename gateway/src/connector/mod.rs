@@ -6,7 +6,7 @@ pub use ::shared::proto;
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 use tokio::sync::{mpsc, RwLock, RwLockReadGuard};
 
-use crate::bus::CoordinatorBus;
+use crate::bus::GatewayBus;
 pub(crate) use client::ConnectorClient;
 use shared::primitives::ConnectorId;
 
@@ -15,7 +15,7 @@ pub(crate) struct Connectors {
 }
 
 impl Connectors {
-    pub async fn new(connectors_file: PathBuf, bus: CoordinatorBus) -> anyhow::Result<Self> {
+    pub async fn new(connectors_file: PathBuf, bus: GatewayBus) -> anyhow::Result<Self> {
         let file_changes = file::watch(connectors_file).await?;
         let connectors = Arc::new(RwLock::new(HashMap::new()));
         Self::spawn_connect_from_list(Arc::clone(&connectors), bus, file_changes);
@@ -28,7 +28,7 @@ impl Connectors {
 
     fn spawn_connect_from_list(
         connectors: Arc<RwLock<HashMap<ConnectorId, ConnectorClient>>>,
-        bus: CoordinatorBus,
+        bus: GatewayBus,
         mut file_changes: mpsc::Receiver<Vec<String>>,
     ) {
         tokio::spawn(async move {

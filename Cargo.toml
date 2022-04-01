@@ -3,6 +3,6 @@
 members = [
   "shared",
   "connector",
-  "coordinator",
+  "gateway",
   "lnctl",
 ]

@@ -6,12 +6,12 @@ pub mod connector {
     tonic::include_proto!("connector");
 }
 
-pub mod coordinator {
-    tonic::include_proto!("coordinator");
+pub mod gateway {
+    tonic::include_proto!("gateway");
 }
 
 pub use connector::*;
-pub use coordinator::*;
+pub use gateway::*;
 pub use shared::*;
 
 mod convert {

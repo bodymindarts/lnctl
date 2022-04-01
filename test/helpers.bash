@@ -1,7 +1,7 @@
 lnctl=./target/debug/lnctl
 
 export CONNECTOR_CONFIG=./test/connector/connector.yml
-export COORDINATOR_CONFIG=./test/coordinator/coordinator.yml
+export GATEWAY_CONFIG=./test/gateway/gateway.yml
 
 start_connector() {
   background cargo run --bin lnctl-connector
@@ -11,25 +11,25 @@ stop_connector() {
   [ -f .lnctl/connector/pid ] && kill $(cat .lnctl/connector/pid) > /dev/null || true
 }
 
-start_coordinator() {
-  background cargo run --bin lnctl-coordinator
+start_gateway() {
+  background cargo run --bin lnctl-gateway
 }
 
-stop_coordinator() {
-  [ -f .lnctl/coordinator/pid ] && kill $(cat .lnctl/coordinator/pid) > /dev/null || true
+stop_gateway() {
+  [ -f .lnctl/gateway/pid ] && kill $(cat .lnctl/gateway/pid) > /dev/null || true
 }
 
 curl_connector() {
   grpcurl -plaintext -import-path ./proto/shared -import-path ./proto/connector -proto connector.proto localhost:5626 connector.LnctlConnector/$1 
 }
 
-curl_coordinator() {
+curl_gateway() {
   args=""
   if [[ "${2}" != "" ]]; then
     args="-d"
   fi
 
-  grpcurl ${args} ${2} -plaintext -import-path ./proto/shared -import-path ./proto/coordinator -proto coordinator.proto  localhost:5625 coordinator.LnctlCoordinator/$1 
+  grpcurl ${args} ${2} -plaintext -import-path ./proto/shared -import-path ./proto/gateway -proto gateway.proto  localhost:5625 gateway.LnctlGateway/$1 
 }
 
 start_network() {

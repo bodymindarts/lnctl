@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 shared = { path = "../shared", package = "lnctl-shared" }
 connector = { path = "../connector", package = "lnctl-connector" }
-coordinator = { path = "../coordinator", package = "lnctl-coordinator" }
+gateway = { path = "../gateway", package = "lnctl-gateway" }
 
 anyhow = "1.0"
 clap = { version =  "3.0", features = ["derive"] }

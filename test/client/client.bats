@@ -12,7 +12,7 @@ teardown_file() {
 
 teardown() {
   stop_connector
-  stop_coordinator
+  stop_gateway
 }
 
 @test "Can list channel history" {

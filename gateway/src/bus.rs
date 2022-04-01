@@ -14,7 +14,7 @@ pub(crate) enum BusMessage {
     ConnectorMessage(ConnectorMessage),
 }
 
-pub(crate) type CoordinatorBus = MessageBus<BusMessage>;
+pub(crate) type GatewayBus = MessageBus<BusMessage>;
 
 pub(crate) struct ConnectorMsgSub<T> {
     pub msg: ConnectorMessage,

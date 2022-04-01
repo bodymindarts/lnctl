@@ -9,7 +9,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Path::new("../flatbuffers/shared.fbs"),
             Path::new("../flatbuffers/channels_archive.fbs"),
         ],
-        out_dir: Path::new("../flatbuffers/gen/coordinator/"),
+        out_dir: Path::new("../flatbuffers/gen/gateway/"),
         ..Default::default()
     })?;
     Ok(())

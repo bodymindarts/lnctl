@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package coordinator;
+package gateway;
 
 import "shared.proto";
 
-service LnctlCoordinator {
+service LnctlGateway {
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse) {}
   rpc ListMonitoredChannelSnapshots(ListMonitoredChannelSnapshotsRequest)
       returns (ListMonitoredChannelSnapshotsResponse) {}
@@ -12,7 +12,7 @@ service LnctlCoordinator {
 
 message GetStatusRequest {}
 message GetStatusResponse {
-  string coordinator_id = 1;
+  string gateway_id = 1;
   repeated ConnectorInfo connectors = 2;
 }
 

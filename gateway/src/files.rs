@@ -2,7 +2,7 @@ use anyhow::Context;
 use std::{fs, path::PathBuf, process};
 use uuid::Uuid;
 
-const UUID_FILE_NAME: &str = "coordinator-id";
+const UUID_FILE_NAME: &str = "gateway-id";
 
 pub fn init(path: PathBuf) -> anyhow::Result<Uuid> {
     fs::create_dir_all(&path).context("failed to create data dir")?;

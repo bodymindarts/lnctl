@@ -10,13 +10,13 @@ run-server: build
 connector-integration:
 	RUST_BACKTRACE=1 bats -t -r test/connector
 
-coordinator-integration:
-	RUST_BACKTRACE=1 bats -t -r test/coordinator
+gateway-integration:
+	RUST_BACKTRACE=1 bats -t -r test/gateway
 
 client-integration:
 	RUST_BACKTRACE=1 bats -t -r test/client
 
-integration: build connector-integration coordinator-integration client-integration
+integration: build connector-integration gateway-integration client-integration
 
 clippy:
 	cargo clippy --all-features

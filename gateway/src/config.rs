@@ -10,7 +10,7 @@ pub struct ServerConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct CoordinatorConfig {
+pub struct GatewayConfig {
     #[serde(default)]
     pub server: ServerConfig,
     #[serde(default = "default_connectors_file")]
@@ -24,7 +24,7 @@ fn default_server_port() -> u16 {
 }
 
 fn default_data_dir() -> PathBuf {
-    PathBuf::from(".lnctl/coordinator")
+    PathBuf::from(".lnctl/gateway")
 }
 
 fn default_connectors_file() -> PathBuf {

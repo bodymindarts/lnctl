@@ -2,7 +2,7 @@ pub mod flat {
     pub use crate::shared_generated::*;
     pub mod channels_archive {
         use super::*;
-        include!("../../../flatbuffers/gen/coordinator/channels_archive_generated.rs");
+        include!("../../../flatbuffers/gen/gateway/channels_archive_generated.rs");
     }
 }
 
@@ -26,7 +26,7 @@ pub(crate) struct Db {
 }
 
 impl Db {
-    pub fn new(data_dir: &PathBuf, bus: CoordinatorBus) -> anyhow::Result<Self> {
+    pub fn new(data_dir: &PathBuf, bus: GatewayBus) -> anyhow::Result<Self> {
         let db: sled::Db = sled::open(format!("{}/sled", data_dir.display()))?;
         let channels = db.open_tree("monitored-channels-archive")?;
         Self::persist_monitored_channels(channels.clone(), bus.clone());
@@ -36,7 +36,7 @@ impl Db {
         })
     }
 
-    fn persist_monitored_channels(channels: sled::Tree, bus: CoordinatorBus) {
+    fn persist_monitored_channels(channels: sled::Tree, bus: GatewayBus) {
         tokio::spawn(async move {
             let mut stream = bus
                 .subscribe::<ConnectorMsgSub<proto::MonitoredChannelUpdate>>()
