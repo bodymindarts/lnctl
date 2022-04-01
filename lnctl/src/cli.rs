@@ -19,6 +19,7 @@ enum Commands {
     Connector {},
     Server {},
     GetStatus {},
+    ChannelHistory { channel_id: u64 },
 }
 
 const DEFAULT_CONFIG: &str = "lnctl.yml";
@@ -42,6 +43,14 @@ pub async fn run() -> anyhow::Result<()> {
             };
 
             client::get_status(config).await?;
+        }
+        Commands::ChannelHistory { channel_id } => {
+            let config = client::ClientConfig {
+                addr: "localhost".to_string(),
+                port: config.coordinator.server.port,
+            };
+
+            client::channel_history(config, channel_id).await?;
         }
     }
     Ok(())
