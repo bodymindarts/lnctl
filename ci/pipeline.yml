@@ -4,6 +4,10 @@
 #@   return data.values.docker_registry + "/lnctl-pipeline"
 #@ end
 
+#@ def lnctl_image():
+#@   return data.values.docker_registry + "/lnctl"
+#@ end
+
 #@ def task_image_config():
 type: registry-image
 source:
@@ -16,6 +20,9 @@ groups:
 - name: lnctl
   jobs:
   - test-unit
+  - rc
+  - release
+  - auto-bump-patch
 - name: image
   jobs: [ build-pipeline-image ]
 
@@ -63,6 +70,56 @@ jobs:
         run:
           path: pipeline-tasks/ci/tasks/test-unit.sh
 
+- name: rc
+  serial: true
+  plan:
+  - in_parallel:
+    - get: repo
+      trigger: true
+      passed:
+      - test-unit
+    - { get: version, params: { pre: rc } }
+  - put: version
+    params: { file: version/number }
+
+- name: release
+  plan:
+  - in_parallel:
+    - { get: version, passed: [rc], params: {bump: final} }
+    - { get: repo, passed: [rc] }
+    - { get: pipeline-tasks }
+  - in_parallel:
+    - do:
+      - task: build-docker
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: vito/oci-build-task
+          inputs:
+          - name: repo
+          outputs:
+          - name: image
+          params:
+            CONTEXT: repo
+          run:
+            path: build
+      - put: lnctl-image
+        params:
+          image: image/image.tar
+          additional_tags: version/number
+
+- name: auto-bump-patch
+  plan:
+  - in_parallel:
+    - { get: repo }
+    - { get: pipeline-tasks }
+    - { get: version, trigger: true, params: { bump: patch, pre: rc }, passed: [release] }
+  - in_parallel:
+    - { put: version, params: { file: version/number } }
+
 resources:
 - name: repo
   type: git
@@ -96,3 +153,21 @@ resources:
     username: #@ data.values.docker_registry_user
     password: #@ data.values.docker_registry_password
     repository: #@ pipeline_image()
+
+- name: version
+  type: semver
+  source:
+    initial_version: 0.0.0
+    driver: git
+    file: version
+    uri: #@ data.values.git_uri
+    branch: #@ data.values.git_version_branch
+    private_key: #@ data.values.github_private_key
+
+- name: lnctl-image
+  type: registry-image
+  source:
+    tag: edge
+    username: #@ data.values.docker_registry_user
+    password: #@ data.values.docker_registry_password
+    repository: #@ lnctl_image()

@@ -3,6 +3,7 @@
 git_uri: git@github.com:bodymindarts/lnctl.git
 git_branch: main
 github_private_key: ((github-ssh-key.private_key))
+git_version_branch: version
 docker_registry: eu.gcr.io/misthos-network-control-plane
 docker_registry_user: ((docker-creds.username))
 docker_registry_password: ((docker-creds.password))
