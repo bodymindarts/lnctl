@@ -37,7 +37,43 @@ jobs:
     params:
       image: image/image.tar
 
+- name: test-unit
+  plan:
+  - in_parallel:
+    - { get: repo, trigger: true }
+    - { get: pipeline-tasks }
+  - in_parallel:
+    - task: test-unit
+      config:
+        platform: linux
+        image_resource: #@ task_image_config()
+        caches:
+        - name: cargo-home
+        - name: cargo-target-dir
+        inputs:
+        - name: pipeline-tasks
+        - name: repo
+        run:
+          path: pipeline-tasks/ci/tasks/test-unit.sh
+
 resources:
+- name: repo
+  type: git
+  source:
+    ignore_paths: ["ci/*[^md]"]
+    fetch_tags: true
+    uri: #@ data.values.git_uri
+    branch: #@ data.values.git_branch
+    private_key: #@ data.values.github_private_key
+
+- name: pipeline-tasks
+  type: git
+  source:
+    paths: [ci/tasks/*, Makefile]
+    uri: #@ data.values.git_uri
+    branch: #@ data.values.git_branch
+    private_key: #@ data.values.github_private_key
+
 - name: pipeline-image-def
   type: git
   source:
@@ -45,6 +81,7 @@ resources:
     uri: #@ data.values.git_uri
     branch: #@ data.values.git_branch
     private_key: #@ data.values.github_private_key
+
 - name: pipeline-image
   type: registry-image
   source:
