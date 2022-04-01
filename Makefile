@@ -21,4 +21,7 @@ integration: build connector-integration coordinator-integration client-integrat
 clippy:
 	cargo clippy --all-features
 
+test-in-ci: clippy
+	cargo test --all-features --verbose --locked
+
 .PHONY: test integration clippy

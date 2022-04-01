@@ -1,0 +1,8 @@
+#@data/values
+---
+git_uri: git@github.com:bodymindarts/lnctl.git
+git_branch: main
+github_private_key: ((github.private_key))
+docker_registry: eu.gcr.io/misthos-network-control-plane
+docker_registry_user: ((docker-creds.username))
+docker_registry_password: ((docker-creds.password))
