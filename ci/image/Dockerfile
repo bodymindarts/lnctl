@@ -4,6 +4,7 @@ COPY --from=neomantra/flatbuffers /usr/local/bin/flatc /usr/local/bin/flatc
 
 RUN rustc --version
 
+RUN rustup component add rustfmt
 RUN rustup component add clippy
 
 RUN git clone https://github.com/bats-core/bats-core.git \
