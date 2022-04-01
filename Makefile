@@ -13,7 +13,10 @@ connector-integration:
 coordinator-integration:
 	RUST_BACKTRACE=1 bats -t -r test/coordinator
 
-integration: build connector-integration coordinator-integration
+client-integration:
+	RUST_BACKTRACE=1 bats -t -r test/client
+
+integration: build connector-integration coordinator-integration client-integration
 
 clippy:
 	cargo clippy --all-features

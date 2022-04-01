@@ -1,4 +1,5 @@
-pub mod cli;
 mod client;
-pub mod config;
 mod results;
+
+pub mod cli;
+pub mod config;

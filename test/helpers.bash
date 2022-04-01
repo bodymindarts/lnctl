@@ -1,3 +1,5 @@
+lnctl=./target/debug/lnctl
+
 export CONNECTOR_CONFIG=./test/connector/connector.yml
 export COORDINATOR_CONFIG=./test/coordinator/coordinator.yml
 

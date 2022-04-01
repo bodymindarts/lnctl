@@ -1,9 +1,15 @@
 connector:
-  type: lnd
-  lnd:
-    admin_endpoint: "localhost:10009"
-    cert_path: "dev/lnd/tls.cert"
-    macaroon_path: "dev/lnd/lnd1.macaroon"
+  connector:
+    type: lnd
+    lnd:
+      admin_endpoint: "localhost:10009"
+      cert_path: "dev/lnd/tls.cert"
+      macaroon_path: "dev/lnd/lnd1.macaroon"
+
+  gossip:
+    host: host.docker.internal
+
+  scrape_interval: 2
 
 coordinator:
   connectors_file: test/coordinator/connectors
