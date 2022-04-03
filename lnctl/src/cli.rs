@@ -42,7 +42,8 @@ pub async fn run() -> anyhow::Result<()> {
                 port: config.gateway.server.port,
             };
 
-            client::get_status(config).await?;
+            let client = client::GatewayClient::new(config);
+            client.get_status().await?;
         }
         Commands::ChannelHistory { channel_id } => {
             let config = client::ClientConfig {
@@ -50,7 +51,8 @@ pub async fn run() -> anyhow::Result<()> {
                 port: config.gateway.server.port,
             };
 
-            client::channel_history(config, channel_id).await?;
+            let client = client::GatewayClient::new(config);
+            client.channel_history(channel_id).await?;
         }
     }
     Ok(())

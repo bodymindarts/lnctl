@@ -8,38 +8,54 @@ pub struct ClientConfig {
     pub port: u16,
 }
 
-pub async fn get_status(config: ClientConfig) -> anyhow::Result<()> {
-    let mut client =
-        LnCtlGatewayClient::connect(format!("http://{}:{}", config.addr, config.port)).await?;
-
-    let request = tonic::Request::new(gateway::GetStatusRequest {});
-
-    let response = client.get_status(request).await?;
-
-    let peers: Vec<_> = response
-        .into_inner()
-        .connectors
-        .into_iter()
-        .map(results::ConnectorInfo::from)
-        .collect();
-
-    println!("{}", serde_json::to_string_pretty(&peers).unwrap());
-
-    Ok(())
+pub struct GatewayClient {
+    config: ClientConfig,
 }
+impl GatewayClient {
+    pub fn new(config: ClientConfig) -> GatewayClient {
+        GatewayClient { config: config }
+    }
 
-pub async fn channel_history(config: ClientConfig, short_channel_id: u64) -> anyhow::Result<()> {
-    let mut client =
-        LnCtlGatewayClient::connect(format!("http://{}:{}", config.addr, config.port)).await?;
+    async fn connect(&self) -> anyhow::Result<LnCtlGatewayClient> {
+        let client = LnCtlGatewayClient::connect(format!(
+            "http://{}:{}",
+            self.config.addr, self.config.port
+        ))
+        .await?;
+        Ok(client)
+    }
 
-    let request =
-        tonic::Request::new(gateway::ListMonitoredChannelSnapshotsRequest { short_channel_id });
+    pub async fn get_status(&self) -> anyhow::Result<()> {
+        let mut client = self.connect().await?;
 
-    let response = client.list_monitored_channel_snapshots(request).await?;
+        let request = tonic::Request::new(gateway::GetStatusRequest {});
 
-    let history = results::ChannelHistory::from(response.into_inner());
+        let response = client.get_status(request).await?;
 
-    println!("{}", serde_json::to_string_pretty(&history).unwrap());
+        let peers: Vec<_> = response
+            .into_inner()
+            .connectors
+            .into_iter()
+            .map(results::ConnectorInfo::from)
+            .collect();
 
-    Ok(())
+        println!("{}", serde_json::to_string_pretty(&peers).unwrap());
+
+        Ok(())
+    }
+
+    pub async fn channel_history(&self, short_channel_id: u64) -> anyhow::Result<()> {
+        let mut client = self.connect().await?;
+
+        let request =
+            tonic::Request::new(gateway::ListMonitoredChannelSnapshotsRequest { short_channel_id });
+
+        let response = client.list_monitored_channel_snapshots(request).await?;
+
+        let history = results::ChannelHistory::from(response.into_inner());
+
+        println!("{}", serde_json::to_string_pretty(&history).unwrap());
+
+        Ok(())
+    }
 }
